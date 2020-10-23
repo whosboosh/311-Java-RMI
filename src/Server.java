@@ -8,11 +8,15 @@ public class Server extends ImplRMI {
 
     public static void main(String[] args) {
         try {
+            // Generate a symmetric key for the client and server
             Utilities.generateKey();
-            ImplRMI server = new ImplRMI();
-            RMIService stub = (RMIService) UnicastRemoteObject.exportObject(server, 0);
-            Registry registry = LocateRegistry.createRegistry(1099);
-            registry.rebind("ServerRMI", stub);
+            ImplRMI server = new ImplRMI(); // Create instance of the implementation of remote interface
+
+            // Cast this object back to the interface
+            // Creates a "stub" which is a gateway to the object for the client
+            RMIService stub = (RMIService) UnicastRemoteObject.exportObject(server, 1099);
+            Registry registry = LocateRegistry.createRegistry(1099); // Start registry
+            registry.rebind("ServerRMI", stub); // Bind stub to registry on "ServerRMI"
 
 
             System.out.println("Server Ready");
