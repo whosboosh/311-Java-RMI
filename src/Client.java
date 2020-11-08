@@ -10,7 +10,7 @@ public class Client {
     public static void main(String[] args) {
         try {
             // Find the registry
-            Registry registry = LocateRegistry.getRegistry();
+            Registry registry = LocateRegistry.getRegistry(1099);
             RMIService stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
 
             // Create a cipher using the AES encryption method

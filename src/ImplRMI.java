@@ -8,10 +8,13 @@ public class ImplRMI implements RMIService {
     //private ArrayList<AuctionItem> auctionItems;
     private HashMap<Integer, AuctionItem> auctionItems = new HashMap<Integer, AuctionItem>();
 
+    // Return auction item with provided item Id
     public AuctionItem getSpec(int itemId, int clientId) {
         // Return the item out of auctionList with ID itemID
         return auctionItems.get(itemId);
     }
+
+    // Return a sealed auction item using the symmetric key
     public SealedObject getSpec(int itemId, SealedObject clientRequest) {
         SealedObject sealedResponse = null;
         try {
