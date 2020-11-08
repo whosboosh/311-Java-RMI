@@ -14,7 +14,6 @@ public class Server extends ImplRMI {
             Registry registry = LocateRegistry.createRegistry(1099);
             registry.rebind("ServerRMI", stub);
 
-
             System.out.println("Server Ready");
         } catch (RemoteException e) {
             System.err.println("Server exception "+e.toString());

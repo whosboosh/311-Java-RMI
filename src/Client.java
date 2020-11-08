@@ -20,12 +20,12 @@ public class Client {
             // Create a "SealedObject" containing the clientId. Not in use for part 2
             SealedObject sealedRequest = new SealedObject(new ClientRequest(1), cipher);
             // Will generate a SealedResponse on the server encapsulating the auctionItem for the provided itemId.
-            SealedObject sealedResponse = stub.getSpec(1, sealedRequest);
+            SealedObject sealedResponse = stub.getSpec(Integer.parseInt(args[0]), sealedRequest);
 
             // Set the cipher mode to decrypt, decrypt the message sent from the server
             cipher.init(cipher.DECRYPT_MODE, Utilities.getKey());
             AuctionItem auctionItem = (AuctionItem) sealedResponse.getObject(cipher);
-            System.out.println(auctionItem.getName());
+            System.out.println("ID: " + "'"+auctionItem.getId()+"'" + " Name: " + "'"+auctionItem.getName()+"'" + " Description: " + "'"+auctionItem.getDescription()+"'");
         } catch (Exception e) {
             System.err.println("Client Exception "+e.toString());
             e.printStackTrace();
