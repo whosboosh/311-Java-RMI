@@ -1,8 +1,12 @@
+import javax.management.remote.rmi.RMIServer;
+import java.io.Serializable;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Scanner;
 
-public class Buyer {
+public class Buyer implements Serializable {
 
     public Buyer(String name, String email, Integer id) {
         this.name = name;
@@ -12,6 +16,8 @@ public class Buyer {
     private String name;
     private String email;
     private Integer id;
+
+    private Boolean shouldPoll = true;
 
     public String getName() {
         return name;
@@ -23,27 +29,25 @@ public class Buyer {
         return id;
     }
 
-    public void main(String[] args) {
-        try {
-            // Find the registry
-            Registry registry = LocateRegistry.getRegistry();
-            RMIService stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
-
-            switch(args[0].toLowerCase()) {
-                case "list":
-                    HashMap<Integer, AuctionItem> auctionItems = stub.getAuctionItems();
-                    for (AuctionItem item : auctionItems.values()) {
-                        System.out.println("ID: " + "'"+item.getId()+"'" + " Name: " + "'"+item.getName()+"'" + " Description: " + "'"+item.getDescription()+"'");
+    public void pollServerIfWon(RMIService stub, Integer itemId) {
+            new Thread( new Runnable() {
+                public void run() {
+                    while (shouldPoll) {
+                        try {
+                            shouldPoll = !stub.indicateWinner(itemId, getId()); // If shouldPoll is negative then they've won, indicateWinner returns true if won so we flip
+                            if (!shouldPoll) {
+                                AuctionItem wonItem = stub.getClosedAuctionItems().get(itemId);
+                                System.out.println("You've won! ID: " + wonItem.getId() + " " + wonItem.getName() + " " + wonItem.getDescription());
+                                break;
+                            }
+                            Thread.sleep(1000);
+                        }
+                        catch (Exception e) {
+                            System.err.println("Client Exception "+e.toString());
+                            e.printStackTrace();
+                        }
                     }
-                case "add":
-                    // Bid on an auction item (args[2]), create bid with the bid amount (args[1]), pass this as a reference to who the buyer is
-                    stub.bidAuction(new Bid(Double.parseDouble(args[1]), this), Integer.parseInt(args[2]));
-                    break;
-            }
-        } catch(Exception e) {
-            System.err.println("Client Exception "+e.toString());
-            e.printStackTrace();
-        }
-
+                }
+            }).start();
     }
 }

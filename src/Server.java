@@ -4,8 +4,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class Server extends ImplRMI {
-    private Server(){}
-
+    public Server(){}
     public static void main(String[] args) {
         try {
             // Generate a symmetric key for the client and server

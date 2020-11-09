@@ -10,7 +10,6 @@ import java.security.Key;
 import java.security.SecureRandom;
 
 public class Utilities {
-
     public static void generateKey() {
         try {
             // Generate a secret key based on randomness provided by SecureRandom. Using AES cryptography

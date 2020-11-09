@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ImplRMI implements RMIService {
-    //private ArrayList<AuctionItem> auctionItems;
-    private HashMap<Integer, AuctionItem> auctionItems = new HashMap<Integer, AuctionItem>();
+    private HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
+    private HashMap<Integer, AuctionItem> closedAuctions = new HashMap<>();
 
     // Return auction item with provided item Id
     public AuctionItem getSpec(int itemId, int clientId) {
@@ -29,29 +29,44 @@ public class ImplRMI implements RMIService {
     }
 
     public HashMap<Integer, AuctionItem> getAuctionItems() { return auctionItems; }
+    public HashMap<Integer, AuctionItem> getClosedAuctionItems() { return closedAuctions; }
 
-    public Integer createAuction(double startingPrice, String name, String description, double reserve) {
+    public Integer createAuction(Seller seller, double startingPrice, String name, String description, double reserve) {
         Integer itemId = 0;
         for (int i = 0; i < auctionItems.size(); ++i) {
             if (auctionItems.get(i).getId() == i) itemId++;
             else break;
         }
-        auctionItems.put(itemId, new AuctionItem(name, description, reserve, startingPrice, itemId));
-
+        auctionItems.put(itemId, new AuctionItem(name, description, reserve, startingPrice, itemId, seller));
+        System.out.println("Added item "+itemId);
         return itemId;
     }
 
-     public void closeAuction(Integer itemId) {
-        auctionItems.get(itemId);
-     }
+    public void closeAuction(Integer itemId) {
+        // Work out who the highest bidder is
+        Bid highestBid = auctionItems.get(itemId).getCurrentBids().get(0);
+        for (Bid bid : auctionItems.get(itemId).getCurrentBids()) {
+            // Get the highest bid
+            if (bid.getBidAmount() > highestBid.getBidAmount()) {
+                highestBid = bid;
+            }
+            // Logic for if two bids have the same price (choose first bidder?)
+        }
+        System.out.println(highestBid.getBuyer().getName());
 
-     public void bidAuction(Bid bid, Integer itemId) {
-        // For an auction item with itemId, add bid to the currentBids ArrayList
-         auctionItems.get(itemId).addBid(bid);
-     }
+        auctionItems.get(itemId).setWinningBuyerId(highestBid.getBuyer().getId()); // Mark winner as buyerId
+        closedAuctions.put(itemId, auctionItems.get(itemId)); // Move the item into the "closed auctions array"
+        auctionItems.remove(itemId); // Remove item from auctionItems as it's been sold
+    }
 
-     public Boolean indicateWinner(Integer itemId, int clientId) {
-        // return true if auction item no longer exists in auctionItems and clientId is the winning client
-         return false;
-     }
+    public void bidAuction(Bid bid) {
+        // For an auction item with itemId, add bid to the currentBids HashMap
+        auctionItems.get(bid.getItemId()).addBid(bid);
+    }
+
+    public Boolean indicateWinner(Integer itemId, Integer buyerId) {
+        // Return true if the item in closedAuctions winning id matches the buyer id
+        if (closedAuctions.get(itemId) == null) return false; //  if the item doesn't exist
+        return closedAuctions.get(itemId).getWinningBuyerId().equals(buyerId);
+    }
 }
