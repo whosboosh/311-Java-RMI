@@ -7,6 +7,7 @@ public class AuctionItem implements Serializable {
         this.description = description;
         this.reserveAmount = reserve;
         this.startingPrice = startingPrice;
+        this.highestBidAmount = startingPrice;
         this.id = id;
         this.seller = seller;
     }
@@ -16,6 +17,7 @@ public class AuctionItem implements Serializable {
     private double reserveAmount;
     private double startingPrice;
     private ArrayList<Bid> currentBids = new ArrayList<>();
+    private double highestBidAmount;
     private Integer winningBuyerId;
     private Seller seller;
 
@@ -31,11 +33,20 @@ public class AuctionItem implements Serializable {
     public double getReserve() { return reserveAmount; }
     public double getStartingPrice() { return startingPrice; }
     public ArrayList<Bid> getCurrentBids(){ return currentBids; }
-    public void addBid(Bid bid) {
+    public boolean addBid(Bid bid) {
+        // Check if bid is valid, highestBidAmount is always >= startingPrice
+        if (bid.getBidAmount() <= highestBidAmount) {
+            return false;
+        }
         currentBids.add(bid);
+        highestBidAmount = bid.getBidAmount();
         for (Bid item : currentBids) {
             System.out.println("Amount: "+item.getBidAmount() + " Buyer: "+item.getBuyer().getName() + " For item: " + item.getItemId());
         }
+        return true;
+    }
+    public double getHighestBid() {
+        return highestBidAmount;
     }
     public void setWinningBuyerId(Integer buyerId) {
         winningBuyerId = buyerId;

@@ -18,22 +18,20 @@ public class ClientSeller {
             HashMap<Integer, Seller> sellers = new HashMap<>();
             Seller currentSeller = null;
 
-            System.out.println("auth create\nauth login\nauth list\nauction add\nauction list\nauction close\n");
+            System.out.println("Welcome Seller!\nPlease use `help` to view available commands");
 
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
                 String input = scanner.nextLine();
                 String[] splitted = input.split("\\s+");
-                System.out.println(Arrays.toString(splitted));
+                // Require user to enter more than 1 input
+                if (splitted.length < 2) {
+                    System.out.println("Available commands:\nauth create\nauth login\nauth show\nauction add\nauction list\nauction close");
+                    continue;
+                }
                 switch(splitted[0]) {
                     case "auth":
                         switch(splitted[1].toLowerCase()) {
-                            case "list":
-                                // List current seller accounts
-                                for (Seller seller : sellers.values()) {
-                                    System.out.println("ID: " + seller.getId());
-                                }
-                                break;
                             case "create":
                                 // Create a new seller with unique id
                                 Integer sellerId = 0;
@@ -67,6 +65,14 @@ public class ClientSeller {
                                     }
                                 }
                                 break;
+                            case "show":
+                                // Tell user who the curently logged in account is
+                                if (currentSeller == null) {
+                                    System.out.println("Not logged in, either login or create an account");
+                                    break;
+                                }
+                                System.out.println("Currently logged in as: "+currentSeller.getId());
+                                break;
                         }
                         break;
                         case "auction":
@@ -86,7 +92,7 @@ public class ClientSeller {
                                         // splitted[4] = description of item
                                         // splitted[5] = reserve price
                                         Integer itemId = stub.createAuction(sellers.get(currentSeller.getId()), Double.parseDouble(splitted[2]), splitted[3], splitted[4], Double.parseDouble(splitted[5]));
-                                        System.out.println("Auction item created with ID" + itemId);
+                                        System.out.println("Auction item created with ID: " + itemId);
                                     }
                                     break;
                                 case "list":
@@ -110,6 +116,41 @@ public class ClientSeller {
                                     break;
                             }
                             break;
+                    case "help":
+                        // Need at least 3 parameters for information on commands e.g. `help auction create`
+                        if (splitted.length < 3) {
+                            System.out.println("Not enough parameters provided.\nEnter a command such as `help auction create` to view information about using that command");
+                            break;
+                        }
+                        switch(splitted[1].toLowerCase()) {
+                            case "auction":
+                                switch(splitted[2].toLowerCase()) {
+                                    case "add":
+                                        System.out.println("Bid on an auction item, `auction add <starting-price> <name> <description> <reserve-price>`");
+                                        break;
+                                    case "list":
+                                        System.out.println("List the current ongoing auctions");
+                                        break;
+                                    case "close":
+                                        System.out.println("Close an auction, sold to highest bidder. `auction close <id>`");
+                                        break;
+                                }
+                                break;
+                            case "auth":
+                                switch(splitted[2].toLowerCase()) {
+                                    case "login":
+                                        System.out.println("Login to a user account by providing their ID: `auth login <id>`");
+                                        break;
+                                    case "create":
+                                        System.out.println("Create a user account using the following syntax: `auth create`");
+                                        break;
+                                    case "show":
+                                        System.out.println("Display the id of the currently logged-in user");
+                                        break;
+                                }
+                                break;
+                        }
+                        break;
                 }
             }
 

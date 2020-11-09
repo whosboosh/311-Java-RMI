@@ -9,8 +9,9 @@ public interface RMIService extends Remote {
 
     public HashMap<Integer, AuctionItem> getAuctionItems() throws RemoteException;
     public HashMap<Integer, AuctionItem> getClosedAuctionItems() throws RemoteException;
-    public Integer createAuction(Seller seller, double startingPrice, String description, String name, double reserve) throws RemoteException;
-    public void bidAuction(Bid bid) throws RemoteException;
-    public void closeAuction(Integer itemId) throws RemoteException;
-    public Boolean indicateWinner(Integer itemId, Integer buyerId) throws RemoteException;
+    public AuctionItem getAuctionItem(int id) throws RemoteException;
+    public int createAuction(Seller seller, double startingPrice, String description, String name, double reserve) throws RemoteException;
+    public boolean bidAuction(Bid bid) throws RemoteException;
+    public void closeAuction(int itemId) throws RemoteException;
+    public boolean indicateWinner(int itemId, int buyerId) throws RemoteException;
 }

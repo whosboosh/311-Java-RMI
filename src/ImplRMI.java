@@ -30,9 +30,10 @@ public class ImplRMI implements RMIService {
 
     public HashMap<Integer, AuctionItem> getAuctionItems() { return auctionItems; }
     public HashMap<Integer, AuctionItem> getClosedAuctionItems() { return closedAuctions; }
+    public AuctionItem getAuctionItem(int id) { return  auctionItems.get(id); }
 
-    public Integer createAuction(Seller seller, double startingPrice, String name, String description, double reserve) {
-        Integer itemId = 0;
+    public int createAuction(Seller seller, double startingPrice, String name, String description, double reserve) {
+        int itemId = 0;
         for (int i = 0; i < auctionItems.size(); ++i) {
             if (auctionItems.get(i).getId() == i) itemId++;
             else break;
@@ -42,7 +43,7 @@ public class ImplRMI implements RMIService {
         return itemId;
     }
 
-    public void closeAuction(Integer itemId) {
+    public void closeAuction(int itemId) {
         // Work out who the highest bidder is
         Bid highestBid = auctionItems.get(itemId).getCurrentBids().get(0);
         for (Bid bid : auctionItems.get(itemId).getCurrentBids()) {
@@ -59,12 +60,12 @@ public class ImplRMI implements RMIService {
         auctionItems.remove(itemId); // Remove item from auctionItems as it's been sold
     }
 
-    public void bidAuction(Bid bid) {
+    public boolean bidAuction(Bid bid) {
         // For an auction item with itemId, add bid to the currentBids HashMap
-        auctionItems.get(bid.getItemId()).addBid(bid);
+        return auctionItems.get(bid.getItemId()).addBid(bid);
     }
 
-    public Boolean indicateWinner(Integer itemId, Integer buyerId) {
+    public boolean indicateWinner(int itemId, int buyerId) {
         // Return true if the item in closedAuctions winning id matches the buyer id
         if (closedAuctions.get(itemId) == null) return false; //  if the item doesn't exist
         return closedAuctions.get(itemId).getWinningBuyerId().equals(buyerId);
