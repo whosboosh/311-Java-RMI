@@ -35,16 +35,9 @@ public class AuctionItem implements Serializable {
     public double getStartingPrice() { return startingPrice; }
     public ArrayList<Bid> getCurrentBids(){ return currentBids; }
     // Method is synchronized because we don't want more than 1 thread entering function at at time
-    public synchronized double addBid(Bid bid) {
-        // Check if bid is valid, highestBidAmount is always >= startingPrice
-        if (sold) return -1;
-        else if (bid.getBidAmount() <= highestBidAmount) return -2;
+    public void addBid(Bid bid) {
         currentBids.add(bid);
-        highestBidAmount = bid.getBidAmount();
-        for (Bid item : currentBids) {
-            System.out.println("Amount: "+item.getBidAmount() + " Buyer: "+item.getBuyer().getName() + " For item: " + item.getItemId());
-        }
-        return 0;
+        highestBidAmount = bid.getBidAmount(); // Record the highest amount, if this function is called then its already been validated in ImplRMI bidAuction()
     }
     public void setSold(boolean isSold) { this.sold = isSold; }
     public boolean isSold() { return sold; }

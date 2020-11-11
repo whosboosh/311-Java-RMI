@@ -88,8 +88,16 @@ public class ImplRMI implements RMIService {
         }
     }
 
-    public double bidAuction(Bid bid) {
+    public synchronized double bidAuction(Bid bid) {
         // For an auction item with itemId, add bid to the currentBids HashMap
-        return auctionItems.get(bid.getItemId()).addBid(bid);
+        AuctionItem item = auctionItems.get(bid.getItemId());
+        if (item == null) return -1; // Make sure item id exists
+        else if (item.isSold()) return -2; // If the item is already sold
+        else if (bid.getBidAmount() <= item.getHighestBid()) return -3; // Check if bid is valid, highestBidAmount is always >= startingPrice
+        item.addBid(bid);
+        for (Bid i : item.getCurrentBids()) {
+            System.out.println("Amount: "+i.getBidAmount() + " Buyer: "+i.getBuyer().getName() + " For item: " + i.getItemId());
+        }
+        return 0;
     }
 }

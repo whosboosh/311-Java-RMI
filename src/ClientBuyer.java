@@ -3,6 +3,7 @@ import java.rmi.registry.Registry;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.ArrayList;
 
 public class ClientBuyer {
     public static void main(String[] args) {
@@ -86,18 +87,32 @@ public class ClientBuyer {
                                     System.out.println("Please bid using the syntax: 'auction bid <amount> <id>'");
                                     break;
                                 }
+                                Integer id = Integer.parseInt(splitted[3]);
                                 // Bid on an auction item (args[2]), create bid with the bid amount (args[1]), pass this as a reference to who the buyer is
-                                double result = stub.bidAuction(new Bid(Double.parseDouble(splitted[2]), currentBuyer, Integer.parseInt(splitted[3])));
-                                if (result == -2) { //
-                                    System.out.println("Bid was not successful. Need to bid more than: "+stub.getAuctionItem(Integer.parseInt(splitted[3])).getHighestBid());
+                                double result = stub.bidAuction(new Bid(Double.parseDouble(splitted[2]), currentBuyer, id));
+                                if (result == -1) {
+                                    System.out.println("Item ID provided is not valid");
                                     break;
                                 }
-                                else if (result == -1) {
+                                else if (result == -2) {
                                     System.out.println("Item has been sold, cannot bid");
                                     break;
                                 }
+                                else if (result == -3) {
+                                    System.out.println("Bid was not successful. Need to bid more than: "+stub.getAuctionItem(id).getHighestBid());
+                                    break;
+                                }
                                 System.out.println("Bid processed successfully");
-                                currentBuyer.pollServerIfWon(stub, Integer.parseInt(splitted[3])); // Polls server every second on a new thread to check if item is won
+
+                                // Check if this buyer has a bid on the item already, if they do return. This is because the pollServerIfWon function only needs to be run once per buyer per item
+                                int timesBidded = 0;
+                                ArrayList<Bid> currentBids = stub.getAuctionItem(id).getCurrentBids();
+                                for (Bid bid : currentBids) {
+                                    if (bid.getBuyer().getId().equals(currentBuyer.getId())) {
+                                        timesBidded++;
+                                    }
+                                }
+                                if (timesBidded <= 1) currentBuyer.pollServerIfWon(stub, id); // Polls server every second on a new thread to check if item is won
                                 break;
                             case "list":
                                 HashMap<Integer, AuctionItem> auctionItems = stub.getAuctionItems();
