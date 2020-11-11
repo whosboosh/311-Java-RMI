@@ -6,7 +6,28 @@ import java.util.HashMap;
 
 public class ImplRMI implements RMIService {
     private HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
-    private HashMap<Integer, AuctionItem> closedAuctions = new HashMap<>();
+    private HashMap<Integer, Seller> sellers = new HashMap<>();
+    private HashMap<Integer, Buyer> buyers = new HashMap<>();
+
+    public HashMap<Integer, AuctionItem> getAuctionItems() {
+        return auctionItems;
+    }
+
+    public HashMap<Integer, Buyer> getBuyers() {
+        return buyers;
+    }
+
+    public HashMap<Integer, Seller> getSellers() {
+        return sellers;
+    }
+
+    public void addBuyer(Buyer buyer) {
+        buyers.put(buyer.getId(), buyer);
+    }
+
+    public void addSeller(Seller seller) {
+        sellers.put(seller.getId(), seller);
+    }
 
     // Return auction item with provided item Id
     public AuctionItem getSpec(int itemId, int clientId) {
@@ -22,15 +43,16 @@ public class ImplRMI implements RMIService {
             cipher.init(cipher.ENCRYPT_MODE, Utilities.getKey());
             sealedResponse = new SealedObject(auctionItems.get(itemId), cipher);
             System.out.println("Auction Item is now sealed, ready to sent to client");
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return sealedResponse;
     }
 
-    public HashMap<Integer, AuctionItem> getAuctionItems() { return auctionItems; }
-    public HashMap<Integer, AuctionItem> getClosedAuctionItems() { return closedAuctions; }
-    public AuctionItem getAuctionItem(int id) { return  auctionItems.get(id); }
+    // Return auction item based on id
+    public AuctionItem getAuctionItem(int id) {
+        return auctionItems.get(id);
+    }
 
     public int createAuction(Seller seller, double startingPrice, String name, String description, double reserve) {
         int itemId = 0;
@@ -39,11 +61,11 @@ public class ImplRMI implements RMIService {
             else break;
         }
         auctionItems.put(itemId, new AuctionItem(name, description, reserve, startingPrice, itemId, seller));
-        System.out.println("Added item "+itemId);
+        System.out.println("Added item " + itemId);
         return itemId;
     }
 
-    public void closeAuction(int itemId) {
+    public boolean closeAuction(int itemId) {
         // Work out who the highest bidder is
         Bid highestBid = auctionItems.get(itemId).getCurrentBids().get(0);
         for (Bid bid : auctionItems.get(itemId).getCurrentBids()) {
@@ -53,21 +75,18 @@ public class ImplRMI implements RMIService {
             }
             // Logic for if two bids have the same price (choose first bidder?)
         }
-        System.out.println(highestBid.getBuyer().getName());
-
-        auctionItems.get(itemId).setWinningBuyerId(highestBid.getBuyer().getId()); // Mark winner as buyerId
-        closedAuctions.put(itemId, auctionItems.get(itemId)); // Move the item into the "closed auctions array"
-        auctionItems.remove(itemId); // Remove item from auctionItems as it's been sold
+        auctionItems.get(itemId).setSold(true); // Flag as sold, if reserve wasn't met no winner is set but still closes the auction
+        if (highestBid.getBidAmount() <= auctionItems.get(itemId).getReserve()) {
+            return false;
+        } else {
+            System.out.println(highestBid.getBuyer().getName()+" has won item "+auctionItems.get(itemId).getId());
+            auctionItems.get(itemId).setWinningBuyerId(highestBid.getBuyer().getId()); // Mark winner as buyerId
+            return true;
+        }
     }
 
-    public boolean bidAuction(Bid bid) {
+    public double bidAuction(Bid bid) {
         // For an auction item with itemId, add bid to the currentBids HashMap
         return auctionItems.get(bid.getItemId()).addBid(bid);
-    }
-
-    public boolean indicateWinner(int itemId, int buyerId) {
-        // Return true if the item in closedAuctions winning id matches the buyer id
-        if (closedAuctions.get(itemId) == null) return false; //  if the item doesn't exist
-        return closedAuctions.get(itemId).getWinningBuyerId().equals(buyerId);
     }
 }

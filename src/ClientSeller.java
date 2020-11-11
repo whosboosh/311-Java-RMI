@@ -15,7 +15,7 @@ public class ClientSeller {
             RMIService stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
 
             // Create sellers
-            HashMap<Integer, Seller> sellers = new HashMap<>();
+            HashMap<Integer, Seller> sellers;
             Seller currentSeller = null;
 
             System.out.println("Welcome Seller!\nPlease use `help` to view available commands");
@@ -29,6 +29,7 @@ public class ClientSeller {
                     System.out.println("Available commands:\nauth create\nauth login\nauth show\nauction add\nauction list\nauction close");
                     continue;
                 }
+                sellers = stub.getSellers(); // Update list of sellers from server
                 switch(splitted[0]) {
                     case "auth":
                         switch(splitted[1].toLowerCase()) {
@@ -41,7 +42,7 @@ public class ClientSeller {
                                 }
                                 // Add seller to sellers arraylist, use unique id to create new seller
                                 currentSeller = new Seller(sellerId);
-                                sellers.put(sellerId, currentSeller);
+                                stub.addSeller(currentSeller);
                                 System.out.println("Seller account created with ID: " + sellerId);
                                 System.out.println("Logged in as " + sellerId);
                                 break;
@@ -105,8 +106,15 @@ public class ClientSeller {
                                     }
                                     break;
                                 case "close":
+                                    if (splitted.length < 3) {
+                                        System.out.println("Please provide 3 parameters to close auction, `auction close <id>`");
+                                        break;
+                                    }
                                     // Close the auction and flag buyer they've won
-                                    stub.closeAuction(Integer.parseInt(splitted[2]));
+                                    boolean hasClosed = stub.closeAuction(Integer.parseInt(splitted[2]));
+                                    AuctionItem item = stub.getAuctionItem(Integer.parseInt(splitted[2]));
+                                    if (hasClosed) System.out.println("Auction has closed for "+item.getId()+". The winner was "+stub.getBuyers().get(item.getWinningBuyerId()).getName());
+                                    else System.out.println("Failed to meet reserve price, max bid was: "+item.getHighestBid() + ". Reserve was "+item.getReserve());
                                     break;
                                 case "bids":
                                     ArrayList<Bid> bids = stub.getAuctionItems().get(Integer.parseInt(splitted[2])).getCurrentBids();
@@ -129,7 +137,7 @@ public class ClientSeller {
                                         System.out.println("Bid on an auction item, `auction add <starting-price> <name> <description> <reserve-price>`");
                                         break;
                                     case "list":
-                                        System.out.println("List the current ongoing auctions");
+                                        System.out.println("List the current ongoing auctions for your seller account");
                                         break;
                                     case "close":
                                         System.out.println("Close an auction, sold to highest bidder. `auction close <id>`");

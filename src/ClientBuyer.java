@@ -11,7 +11,7 @@ public class ClientBuyer {
             Registry registry = LocateRegistry.getRegistry();
             RMIService stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
 
-            HashMap<Integer, Buyer> buyers = new HashMap<>();
+            HashMap<Integer, Buyer> buyers;
             Buyer currentBuyer = null;
 
             System.out.println("Welcome Buyer!\nPlease use `help` to view available commands");
@@ -24,6 +24,7 @@ public class ClientBuyer {
                     System.out.println("Available commands:\nauction bid\nauction list\nauth create\nauth login\nauth show");
                     continue;
                 }
+                buyers = stub.getBuyers();
                 switch(splitted[0].toLowerCase()) {
                     case "auth":
                         switch(splitted[1].toLowerCase()) {
@@ -59,12 +60,12 @@ public class ClientBuyer {
                                     else break;
                                 }
                                 currentBuyer = new Buyer(splitted[2], splitted[3], buyerId);
-                                buyers.put(buyerId, currentBuyer);
+                                stub.addBuyer(currentBuyer);
                                 System.out.println("Buyer account created with ID: "+buyerId);
-                                System.out.println("Now logged-in as buyer: "+buyerId);
+                                System.out.println("Now logged-in as buyer: "+currentBuyer.getId()+","+currentBuyer.getName()+","+currentBuyer.getEmail());
                                 break;
                             case "show":
-                                // Tell user who the curently logged in account is
+                                // Tell user who the currently logged in account is
                                 if (currentBuyer == null) {
                                     System.out.println("Not logged in, either login or create an account");
                                     break;
@@ -86,10 +87,15 @@ public class ClientBuyer {
                                     break;
                                 }
                                 // Bid on an auction item (args[2]), create bid with the bid amount (args[1]), pass this as a reference to who the buyer is
-                                if (!stub.bidAuction(new Bid(Double.parseDouble(splitted[2]), currentBuyer, Integer.parseInt(splitted[3])))) {
+                                double result = stub.bidAuction(new Bid(Double.parseDouble(splitted[2]), currentBuyer, Integer.parseInt(splitted[3])));
+                                if (result == -2) { //
                                     System.out.println("Bid was not successful. Need to bid more than: "+stub.getAuctionItem(Integer.parseInt(splitted[3])).getHighestBid());
                                     break;
-                                };
+                                }
+                                else if (result == -1) {
+                                    System.out.println("Item has been sold, cannot bid");
+                                    break;
+                                }
                                 System.out.println("Bid processed successfully");
                                 currentBuyer.pollServerIfWon(stub, Integer.parseInt(splitted[3])); // Polls server every second on a new thread to check if item is won
                                 break;
@@ -100,6 +106,7 @@ public class ClientBuyer {
                                     break;
                                 }
                                 for (AuctionItem item : auctionItems.values()) {
+                                    if (item.isSold()) continue; // Don't list item if sold
                                     System.out.println("ID: " + "'"+item.getId()+"'" + " Name: " + "'"+item.getName()+"'" + " Description: " + "'"+item.getDescription()+"'" +
                                             " Current Highest Bid: "+item.getHighestBid());
                                 }

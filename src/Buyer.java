@@ -1,11 +1,4 @@
-import javax.management.remote.rmi.RMIServer;
 import java.io.Serializable;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Scanner;
-
 public class Buyer implements Serializable {
 
     public Buyer(String name, String email, Integer id) {
@@ -16,8 +9,6 @@ public class Buyer implements Serializable {
     private String name;
     private String email;
     private Integer id;
-
-    private Boolean shouldPoll = true;
 
     public String getName() {
         return name;
@@ -31,13 +22,15 @@ public class Buyer implements Serializable {
 
     public void pollServerIfWon(RMIService stub, Integer itemId) {
             new Thread( new Runnable() {
+                boolean hasSold = false;
                 public void run() {
-                    while (shouldPoll) {
+                    while (!hasSold) {
                         try {
-                            shouldPoll = !stub.indicateWinner(itemId, getId()); // If shouldPoll is negative then they've won, indicateWinner returns true if won so we flip
-                            if (!shouldPoll) {
-                                AuctionItem wonItem = stub.getClosedAuctionItems().get(itemId);
-                                System.out.println("You've won! ID: " + wonItem.getId() + " " + wonItem.getName() + " " + wonItem.getDescription());
+                            AuctionItem item = stub.getAuctionItem(itemId);
+                            hasSold = item.isSold();
+                            if (hasSold) {
+                                if (item.getWinningBuyerId() == null) System.out.println("You've didn't win... ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
+                                else System.out.println("You've won! ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
                                 break;
                             }
                             Thread.sleep(1000);

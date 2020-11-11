@@ -18,8 +18,9 @@ public class AuctionItem implements Serializable {
     private double startingPrice;
     private ArrayList<Bid> currentBids = new ArrayList<>();
     private double highestBidAmount;
-    private Integer winningBuyerId;
+    private Integer winningBuyerId = null;
     private Seller seller;
+    private boolean sold = false;
 
     public String getName() {
         return name;
@@ -33,18 +34,20 @@ public class AuctionItem implements Serializable {
     public double getReserve() { return reserveAmount; }
     public double getStartingPrice() { return startingPrice; }
     public ArrayList<Bid> getCurrentBids(){ return currentBids; }
-    public boolean addBid(Bid bid) {
+    // Method is synchronized because we don't want more than 1 thread entering function at at time
+    public synchronized double addBid(Bid bid) {
         // Check if bid is valid, highestBidAmount is always >= startingPrice
-        if (bid.getBidAmount() <= highestBidAmount) {
-            return false;
-        }
+        if (sold) return -1;
+        else if (bid.getBidAmount() <= highestBidAmount) return -2;
         currentBids.add(bid);
         highestBidAmount = bid.getBidAmount();
         for (Bid item : currentBids) {
             System.out.println("Amount: "+item.getBidAmount() + " Buyer: "+item.getBuyer().getName() + " For item: " + item.getItemId());
         }
-        return true;
+        return 0;
     }
+    public void setSold(boolean isSold) { this.sold = isSold; }
+    public boolean isSold() { return sold; }
     public double getHighestBid() {
         return highestBidAmount;
     }
