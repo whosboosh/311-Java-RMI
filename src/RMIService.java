@@ -15,5 +15,5 @@ public interface RMIService extends Remote {
     public AuctionItem getAuctionItem(int id) throws RemoteException;
     public int createAuction(Seller seller, double startingPrice, String description, String name, double reserve) throws RemoteException;
     public double bidAuction(Bid bid) throws RemoteException;
-    public boolean closeAuction(int itemId) throws RemoteException;
+    public double closeAuction(int itemId, Seller seller) throws RemoteException;
 }

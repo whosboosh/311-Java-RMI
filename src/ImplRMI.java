@@ -65,8 +65,11 @@ public class ImplRMI implements RMIService {
         return itemId;
     }
 
-    public boolean closeAuction(int itemId) {
+    public double closeAuction(int itemId, Seller seller) {
         // Work out who the highest bidder is
+        if (auctionItems.get(itemId) == null) return -1; // Item doesn't exist
+        if (!auctionItems.get(itemId).getSeller().getId().equals(seller.getId())) return -2; // Seller isn't authorised to close this auction
+        if (auctionItems.get(itemId).getCurrentBids().isEmpty()) return -3; // No bids on item
         Bid highestBid = auctionItems.get(itemId).getCurrentBids().get(0);
         for (Bid bid : auctionItems.get(itemId).getCurrentBids()) {
             // Get the highest bid
@@ -77,11 +80,11 @@ public class ImplRMI implements RMIService {
         }
         auctionItems.get(itemId).setSold(true); // Flag as sold, if reserve wasn't met no winner is set but still closes the auction
         if (highestBid.getBidAmount() <= auctionItems.get(itemId).getReserve()) {
-            return false;
+            return -4; // Failed to meet reserve
         } else {
             System.out.println(highestBid.getBuyer().getName()+" has won item "+auctionItems.get(itemId).getId());
             auctionItems.get(itemId).setWinningBuyerId(highestBid.getBuyer().getId()); // Mark winner as buyerId
-            return true;
+            return 0;
         }
     }
 

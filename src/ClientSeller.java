@@ -111,10 +111,13 @@ public class ClientSeller {
                                         break;
                                     }
                                     // Close the auction and flag buyer they've won
-                                    boolean hasClosed = stub.closeAuction(Integer.parseInt(splitted[2]));
+                                    double hasClosed = stub.closeAuction(Integer.parseInt(splitted[2]), currentSeller);
                                     AuctionItem item = stub.getAuctionItem(Integer.parseInt(splitted[2]));
-                                    if (hasClosed) System.out.println("Auction has closed for "+item.getId()+". The winner was "+stub.getBuyers().get(item.getWinningBuyerId()).getName());
-                                    else System.out.println("Failed to meet reserve price, max bid was: "+item.getHighestBid() + ". Reserve was "+item.getReserve());
+                                    if (hasClosed == 0) System.out.println("Auction has closed for "+item.getId()+". The winner was "+stub.getBuyers().get(item.getWinningBuyerId()).getName());
+                                    else if (hasClosed == -1) System.out.println("Item ID provided was not valid, use `auction list` to view current auctions");
+                                    else if (hasClosed == -2) System.out.println("You are not authorised to close this auction");
+                                    else if (hasClosed == -3) System.out.println("There are no bids on the item yet");
+                                    else if (hasClosed == -4) System.out.println("Failed to meet reserve price, max bid was: "+item.getHighestBid() + ". Reserve was "+item.getReserve());
                                     break;
                                 case "bids":
                                     ArrayList<Bid> bids = stub.getAuctionItems().get(Integer.parseInt(splitted[2])).getCurrentBids();
