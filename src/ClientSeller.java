@@ -101,15 +101,16 @@ public class ClientSeller {
                         switch(splitted[1].toLowerCase()) {
                             case "add":
                                 // Create auction for logged-in seller
-                                if (splitted.length < 6) {
+                                if (splitted.length < 5) {
                                     System.out.println("Please create an auction using the syntax: `add <startingPrice> <name> <description> <reserve>");
                                 } else {
                                     // splitted[0] and splitted[1] are the words "auction" and "add"
                                     // splitted[2] = starting price
                                     // splitted[3] = name of item
-                                    // splitted[4] = description of item
-                                    // splitted[5] = reserve price
-                                    int itemId = stub.createAuction(sellers.get(currentSeller.getId()), Double.parseDouble(splitted[2]), splitted[3], splitted[4], Double.parseDouble(splitted[5]));
+                                    // splitted[4] = reserve price
+                                    System.out.println("Item Description: ");
+                                    String description = scanner.nextLine();
+                                    int itemId = stub.createAuction(sellers.get(currentSeller.getId()), Double.parseDouble(splitted[2]), splitted[3], description, Double.parseDouble(splitted[4]));
                                     System.out.println("Auction item created with ID: " + itemId);
                                 }
                                 break;
@@ -154,7 +155,7 @@ public class ClientSeller {
                             case "auction":
                                 switch(splitted[2].toLowerCase()) {
                                     case "add":
-                                        System.out.println("Bid on an auction item, `auction add <starting-price> <name> <description> <reserve-price>`");
+                                        System.out.println("Bid on an auction item, `auction add <starting-price> <name> <reserve-price>`");
                                         break;
                                     case "list":
                                         System.out.println("List the current ongoing auctions for your seller account");
