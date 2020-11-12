@@ -38,7 +38,7 @@ public class ClientBuyer {
                     System.out.println("Available commands:\nauction bid\nauction list\nauth create\nauth login\nauth show");
                     continue;
                 }
-                this.buyers = stub.getBuyers();
+                this.buyers = stub.getBuyers(); // Update list of buyers from server
                 switch(splitted[0].toLowerCase()) {
                     case "auth":
                         switch(splitted[1].toLowerCase()) {
@@ -181,7 +181,6 @@ public class ClientBuyer {
                         }
                         break;
                 }
-                break;
             }
         } catch(Exception e) {
             e.printStackTrace();
