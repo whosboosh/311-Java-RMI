@@ -1,13 +1,51 @@
 import javax.crypto.Cipher;
 import javax.crypto.SealedObject;
 import java.rmi.RemoteException;
+import java.security.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class ImplRMI implements RMIService {
     private HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
     private HashMap<Integer, Seller> sellers = new HashMap<>();
     private HashMap<Integer, Buyer> buyers = new HashMap<>();
+
+    private PrivateKey privateKey;
+    private PublicKey publicKey;
+
+    public void generateKeys() {
+        // Generate a symmetric key for the client and server
+        KeyPair keyPair = Utilities.generateKeyPair();
+        privateKey = keyPair.getPrivate();
+        publicKey = keyPair.getPublic();
+    }
+
+    public PublicKey getPublicKey() {
+        return publicKey;
+    }
+
+    public void authoriseClient(Client client) {
+        try {
+            byte[] messageHash = Utilities.generateHash( "stringtoverify"+client.getId());
+
+            byte[] serverResponse = client.challengeClient(messageHash); // Send the hash to the client, they encrypt it using their private key and return
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.DECRYPT_MODE, client.getPublicKey());
+            byte[] digitalSignature = cipher.doFinal(serverResponse);
+            if (Arrays.equals(digitalSignature, messageHash)) {
+                System.out.println("Client "+client.getId()+" is authorised");
+            } else {
+                System.out.println("Failed to authorise Client "+client.getId());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public byte[] challengeServer(byte[] message) {
+        return Utilities.performChallenge(privateKey, message);
+    }
 
     public HashMap<Integer, AuctionItem> getAuctionItems() {
         return auctionItems;
@@ -40,7 +78,7 @@ public class ImplRMI implements RMIService {
         SealedObject sealedResponse = null;
         try {
             Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(cipher.ENCRYPT_MODE, Utilities.getKey());
+            cipher.init(cipher.ENCRYPT_MODE, Utilities.getKey("key.txt"));
             sealedResponse = new SealedObject(auctionItems.get(itemId), cipher);
             System.out.println("Auction Item is now sealed, ready to sent to client");
         } catch (Exception e) {
@@ -65,10 +103,10 @@ public class ImplRMI implements RMIService {
         return itemId;
     }
 
-    public double closeAuction(int itemId, Seller seller) {
+    public double closeAuction(int itemId, Client client) {
         // Work out who the highest bidder is
         if (auctionItems.get(itemId) == null) return -1; // Item doesn't exist
-        if (!auctionItems.get(itemId).getSeller().getId().equals(seller.getId())) return -2; // Seller isn't authorised to close this auction
+        if (!auctionItems.get(itemId).getSeller().getId().equals(client.getId())) return -2; // Seller isn't authorised to close this auction
         if (auctionItems.get(itemId).getCurrentBids().isEmpty()) return -3; // No bids on item
         Bid highestBid = auctionItems.get(itemId).getCurrentBids().get(0);
         for (Bid bid : auctionItems.get(itemId).getCurrentBids()) {

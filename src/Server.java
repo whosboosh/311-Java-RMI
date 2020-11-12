@@ -4,12 +4,10 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class Server extends ImplRMI {
-    public Server(){}
-    public static void main(String[] args) {
+    public Server(){
         try {
-            // Generate a symmetric key for the client and server
-            Utilities.generateKey();
             ImplRMI server = new ImplRMI(); // Create instance of the implementation of remote interface
+            server.generateKeys();
 
             // Cast this object back to the interface
             // Creates a "stub" which is a gateway to the object for the client
@@ -22,5 +20,9 @@ public class Server extends ImplRMI {
             System.err.println("Server exception "+e.toString());
             e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        new Server();
     }
 }

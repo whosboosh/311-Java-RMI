@@ -1,6 +1,7 @@
 import javax.crypto.SealedObject;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.security.PublicKey;
 import java.util.HashMap;
 
 public interface RMIService extends Remote {
@@ -15,5 +16,8 @@ public interface RMIService extends Remote {
     public AuctionItem getAuctionItem(int id) throws RemoteException;
     public int createAuction(Seller seller, double startingPrice, String description, String name, double reserve) throws RemoteException;
     public double bidAuction(Bid bid) throws RemoteException;
-    public double closeAuction(int itemId, Seller seller) throws RemoteException;
+    public double closeAuction(int itemId, Client client) throws RemoteException;
+    public void authoriseClient(Client client) throws RemoteException;
+    public byte[] challengeServer(byte[] message) throws RemoteException;
+    public PublicKey getPublicKey() throws RemoteException;
 }

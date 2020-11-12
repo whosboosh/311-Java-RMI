@@ -42,6 +42,9 @@ public class ClientSeller {
                                 }
                                 // Add seller to sellers arraylist, use unique id to create new seller
                                 currentSeller = new Seller(sellerId);
+
+                                currentSeller.authoriseServer(stub); // Perform 5 stage challenge response between server and client
+
                                 stub.addSeller(currentSeller);
                                 System.out.println("Seller account created with ID: " + sellerId);
                                 System.out.println("Logged in as " + sellerId);
@@ -92,7 +95,7 @@ public class ClientSeller {
                                         // splitted[3] = name of item
                                         // splitted[4] = description of item
                                         // splitted[5] = reserve price
-                                        Integer itemId = stub.createAuction(sellers.get(currentSeller.getId()), Double.parseDouble(splitted[2]), splitted[3], splitted[4], Double.parseDouble(splitted[5]));
+                                        int itemId = stub.createAuction(sellers.get(currentSeller.getId()), Double.parseDouble(splitted[2]), splitted[3], splitted[4], Double.parseDouble(splitted[5]));
                                         System.out.println("Auction item created with ID: " + itemId);
                                     }
                                     break;
@@ -171,6 +174,7 @@ public class ClientSeller {
         }
     }
 
+    /*
     // Part 1 and 2 code for retreiving an auction item
     public void getItem(RMIService stub, Integer itemId) {
         try {
@@ -191,5 +195,5 @@ public class ClientSeller {
             System.err.println("Client Exception "+e.toString());
             e.printStackTrace();
         }
-    }
+    }*/
 }

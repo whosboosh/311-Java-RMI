@@ -16,7 +16,6 @@ public class ClientBuyer {
             Buyer currentBuyer = null;
 
             System.out.println("Welcome Buyer!\nPlease use `help` to view available commands");
-
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
                 String input = scanner.nextLine();
@@ -61,6 +60,9 @@ public class ClientBuyer {
                                     else break;
                                 }
                                 currentBuyer = new Buyer(splitted[2], splitted[3], buyerId);
+
+                                currentBuyer.authoriseServer(stub); // Perform 5 stage challenge response between server and client
+
                                 stub.addBuyer(currentBuyer);
                                 System.out.println("Buyer account created with ID: "+buyerId);
                                 System.out.println("Now logged-in as buyer: "+currentBuyer.getId()+","+currentBuyer.getName()+","+currentBuyer.getEmail());

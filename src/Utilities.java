@@ -6,10 +6,60 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Key;
-import java.security.SecureRandom;
+import java.security.*;
 
 public class Utilities {
+    public static KeyPair generateKeyPair() {
+        KeyPair keyPair = null;
+        try {
+            SecureRandom secureRandom = new SecureRandom();
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048, secureRandom);
+            keyPair = keyPairGenerator.generateKeyPair();
+        } catch(Exception e) {
+            System.err.println(e.toString());
+            e.printStackTrace();
+        }
+        return keyPair;
+    }
+
+    public static void saveKey(byte[] encodedKey, String name) {
+        try {
+            Files.createDirectories(Paths.get("keys"));
+            Path path = Paths.get("keys/"+name+".key");
+            Files.write(path, encodedKey);
+            System.out.println("Written key to file");
+        } catch(IOException e) {
+            System.err.println(e.toString());
+            e.printStackTrace();
+        }
+    }
+
+    public static byte[] performChallenge(PrivateKey privateKey, byte[] message) {
+        byte[] response = null;
+        try {
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+            byte[] digitalSignature = cipher.doFinal(message);
+            response = digitalSignature;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
+
+    public static byte[] generateHash(String stringToHash) {
+        byte[] returnHash = null;
+        try {
+            byte[] message = stringToHash.getBytes();
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            returnHash = md.digest(message); // Hash the message using SHA-256
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return returnHash;
+    }
+
     public static void generateKey() {
         try {
             // Generate a secret key based on randomness provided by SecureRandom. Using AES cryptography
@@ -36,10 +86,10 @@ public class Utilities {
         }
     }
 
-    public static Key getKey() {
+    public static Key getKey(String path) {
         SecretKey key = null;
         try {
-            byte[] encoded = Files.readAllBytes(Paths.get("key.txt"));
+            byte[] encoded = Files.readAllBytes(Paths.get("Keys/"+path));
             key = new SecretKeySpec(encoded, "AES"); // Generate key from byte array
 
         } catch(Exception e) {
