@@ -25,9 +25,10 @@ public class ImplRMI implements RMIService {
         return publicKey;
     }
 
-    public void authoriseClient(Client client) {
+    public boolean authoriseClient(Client client) {
+        boolean returnVal = false;
         try {
-            byte[] messageHash = Utilities.generateHash( "stringtoverify"+client.getId());
+            byte[] messageHash = Utilities.generateHash( "stringtoverify"+client.getId()); // Challenge to send
 
             byte[] serverResponse = client.challengeClient(messageHash); // Send the hash to the client, they encrypt it using their private key and return
             Cipher cipher = Cipher.getInstance("RSA");
@@ -35,12 +36,24 @@ public class ImplRMI implements RMIService {
             byte[] digitalSignature = cipher.doFinal(serverResponse);
             if (Arrays.equals(digitalSignature, messageHash)) {
                 System.out.println("Client "+client.getId()+" is authorised");
+                returnVal = true;
             } else {
                 System.out.println("Failed to authorise Client "+client.getId());
+                returnVal = false;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return returnVal;
+    }
+
+
+    public void removeSeller(int id) {
+        sellers.remove(id);
+    }
+
+    public void removeBuyer(int id) {
+        buyers.remove(id);
     }
 
     public byte[] challengeServer(byte[] message) {

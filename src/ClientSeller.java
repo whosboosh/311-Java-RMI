@@ -42,13 +42,18 @@ public class ClientSeller {
                                 }
                                 // Add seller to sellers arraylist, use unique id to create new seller
                                 currentSeller = new Seller(sellerId);
-
-                                currentSeller.authoriseServer(stub); // Perform 5 stage challenge response between server and client
-
                                 stub.addSeller(currentSeller);
-                                System.out.println("Seller account created with ID: " + sellerId);
-                                System.out.println("Logged in as " + sellerId);
-                                break;
+                                currentSeller.authoriseServer(stub); // Perform 5 stage challenge response between server and client
+                                if (!currentSeller.authoriseServer(stub)){
+                                    // If failed authorisation, remove the buyer from the list
+                                    stub.removeSeller(currentSeller.getId());
+                                    currentSeller = null;
+                                    System.out.println("Failed to authorise Server, please try creating another account");
+                                } else {
+                                    System.out.println("Seller account created with ID: " + sellerId);
+                                    System.out.println("Logged in as " + sellerId);
+                                    break;
+                                }
                             case "login":
                                 if (sellers.isEmpty()) {
                                     System.out.println("No accounts found, create one with 'auth create'");

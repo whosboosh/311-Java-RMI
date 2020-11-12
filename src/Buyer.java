@@ -20,7 +20,7 @@ public class Buyer implements Client {
     private Integer id;
     private PrivateKey privateKey;
     private PublicKey publicKey;
-    private boolean isServerAuthorised = false;
+    private boolean authorised = false;
 
     public String getName() {
         return name;
@@ -32,9 +32,13 @@ public class Buyer implements Client {
         return id;
     }
     public PublicKey getPublicKey() { return publicKey; }
-    public boolean getIsServerAuthorised() { return isServerAuthorised; }
 
-    public void authoriseServer(RMIService stub) {
+    /**
+     * Challenge the server to encrypt hash using their private key, if we can decrypt it using their public key then we know they're real
+     * @param stub
+     */
+    public boolean authoriseServer(RMIService stub) {
+        boolean authorised = false;
         try {
             byte[] messageHash = Utilities.generateHash("stringtoverifyserver");
 
@@ -44,16 +48,23 @@ public class Buyer implements Client {
             byte[] digitalSignature = cipher.doFinal(serverResponse); // Get the decrypted value
             if (Arrays.equals(digitalSignature, messageHash)) {
                 System.out.println("Server is authorised");
-                isServerAuthorised = true;
                 // Now that server is authorised, the server still needs to authorise us.
-                stub.authoriseClient(this); // Call to server to authorise client, performs the same thing but in reverse
+                // Call to server to authorise client, performs the same thing but in reverse
+                if (stub.authoriseClient(this)) {
+                    System.out.println("Server has authorised you");
+                    authorised = true;
+                } else {
+                    System.out.println("Server failed to authorise you");
+                    authorised = false;
+                }
             } else {
                 System.out.println("Failed to authorise server");
-                isServerAuthorised = false;
+                authorised = false;
             }
         } catch(Exception e) {
             e.printStackTrace();
         }
+        return authorised;
     }
 
     public byte[] challengeClient(byte[] message) {
