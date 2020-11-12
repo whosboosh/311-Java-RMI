@@ -1,7 +1,9 @@
 import javax.crypto.Cipher;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.Arrays;
+import java.util.Base64;
 
 public class Buyer implements Client {
 
@@ -9,6 +11,7 @@ public class Buyer implements Client {
         this.name = name;
         this.email = email;
         this.id = id;
+        this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(name+email));
 
         // Generate public and private keys
         KeyPair keyPair = Utilities.generateKeyPair();
@@ -20,7 +23,7 @@ public class Buyer implements Client {
     private Integer id;
     private PrivateKey privateKey;
     private PublicKey publicKey;
-    private boolean authorised = false;
+    private String authToken;
 
     public String getName() {
         return name;
@@ -32,6 +35,7 @@ public class Buyer implements Client {
         return id;
     }
     public PublicKey getPublicKey() { return publicKey; }
+    public String getAuthToken() { return authToken; }
 
     /**
      * Challenge the server to encrypt hash using their private key, if we can decrypt it using their public key then we know they're real
@@ -80,8 +84,10 @@ public class Buyer implements Client {
                         AuctionItem item = stub.getAuctionItem(itemId);
                         hasSold = item.isSold();
                         if (hasSold) {
-                            if (item.getWinningBuyerId() == null) System.out.println("You've didn't win... ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
-                            else System.out.println("You've won! ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
+                            if (item.getWinningBuyerId() != null) {
+                                if (item.getWinningBuyerId().equals(id)) System.out.println("You've won! ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
+                                else System.out.println("You've didn't win... ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
+                            }
                             break;
                         }
                         Thread.sleep(1000);

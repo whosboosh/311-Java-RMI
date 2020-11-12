@@ -27,18 +27,21 @@ public class ImplRMI implements RMIService {
 
     public boolean authoriseClient(Client client) {
         boolean returnVal = false;
+        String name;
+        if (client.getClass().getName().equals("Seller")) name = "Seller";
+        else name = "Buyer";
         try {
             byte[] messageHash = Utilities.generateHash( "stringtoverify"+client.getId()); // Challenge to send
 
             byte[] serverResponse = client.challengeClient(messageHash); // Send the hash to the client, they encrypt it using their private key and return
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, client.getPublicKey());
-            byte[] digitalSignature = cipher.doFinal(serverResponse);
+            byte[] digitalSignature = cipher.doFinal(serverResponse); // Decrypt the response with client public key
             if (Arrays.equals(digitalSignature, messageHash)) {
-                System.out.println("Client "+client.getId()+" is authorised");
+                System.out.println(name+" "+client.getId()+" is authorised");
                 returnVal = true;
             } else {
-                System.out.println("Failed to authorise Client "+client.getId());
+                System.out.println("Failed to authorise"+name+" "+client.getId());
                 returnVal = false;
             }
         } catch (Exception e) {

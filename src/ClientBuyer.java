@@ -59,16 +59,14 @@ public class ClientBuyer {
                                     if (buyers.get(i).getId() == i) buyerId++;
                                     else break;
                                 }
-                                currentBuyer = new Buyer(splitted[2], splitted[3], buyerId);
-                                stub.addBuyer(currentBuyer);
-
+                                Buyer testBuyer = new Buyer(splitted[2], splitted[3], buyerId);
                                 // Perform 5 stage challenge response between server and client
-                                if (!currentBuyer.authoriseServer(stub)){
+                                if (!testBuyer.authoriseServer(stub)){
                                     // If failed authorisation, remove the buyer from the list
-                                    stub.removeBuyer(currentBuyer.getId());
-                                    currentBuyer = null;
                                     System.out.println("Failed to authorise Server, please try creating another account");
                                 } else {
+                                    currentBuyer = testBuyer;
+                                    stub.addBuyer(currentBuyer);
                                     System.out.println("Buyer account created with ID: "+buyerId);
                                     System.out.println("Now logged-in as buyer: "+currentBuyer.getId()+","+currentBuyer.getName()+","+currentBuyer.getEmail());
                                 }

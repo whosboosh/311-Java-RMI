@@ -40,8 +40,7 @@ public class Utilities {
         try {
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.ENCRYPT_MODE, privateKey);
-            byte[] digitalSignature = cipher.doFinal(message);
-            response = digitalSignature;
+            response = cipher.doFinal(message);
         } catch(Exception e) {
             e.printStackTrace();
         }
