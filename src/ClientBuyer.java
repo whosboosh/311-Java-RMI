@@ -7,16 +7,30 @@ import java.util.ArrayList;
 
 public class ClientBuyer {
     public static void main(String[] args) {
+        ClientBuyer clientBuyer = new ClientBuyer();
+        clientBuyer.startInput();
+    }
+
+    public ClientBuyer() {
         try {
             // Find the registry
             Registry registry = LocateRegistry.getRegistry();
-            RMIService stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
+            stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-            HashMap<Integer, Buyer> buyers;
-            Buyer currentBuyer = null;
+    private HashMap<Integer, Buyer> buyers;
+    private Buyer currentBuyer = null;
+    private RMIService stub;
 
+    private void startInput() {
+        try {
             System.out.println("Welcome Buyer!\nPlease use `help` to view available commands");
             Scanner scanner = new Scanner(System.in);
+
+            // Loop user input
             while (scanner.hasNextLine()) {
                 String input = scanner.nextLine();
                 String[] splitted = input.split("\\s+"); // Split by each word
@@ -24,7 +38,7 @@ public class ClientBuyer {
                     System.out.println("Available commands:\nauction bid\nauction list\nauth create\nauth login\nauth show");
                     continue;
                 }
-                buyers = stub.getBuyers();
+                this.buyers = stub.getBuyers();
                 switch(splitted[0].toLowerCase()) {
                     case "auth":
                         switch(splitted[1].toLowerCase()) {
@@ -167,11 +181,10 @@ public class ClientBuyer {
                         }
                         break;
                 }
+                break;
             }
         } catch(Exception e) {
-            System.err.println("Client Exception "+e.toString());
             e.printStackTrace();
         }
     }
-
 }

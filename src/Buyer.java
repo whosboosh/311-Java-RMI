@@ -11,7 +11,7 @@ public class Buyer implements Client {
         this.name = name;
         this.email = email;
         this.id = id;
-        this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(name+email));
+        //this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(name+email));
 
         // Generate public and private keys
         KeyPair keyPair = Utilities.generateKeyPair();

@@ -9,15 +9,27 @@ import java.util.Scanner;
 
 public class ClientSeller {
     public static void main(String[] args) {
+        ClientSeller clientSeller = new ClientSeller();
+        clientSeller.startInput();
+    }
+
+    public ClientSeller() {
         try {
             // Find the registry
-            Registry registry = LocateRegistry.getRegistry(1099);
-            RMIService stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
+            registry = LocateRegistry.getRegistry(1099);
+            stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-            // Create sellers
-            HashMap<Integer, Seller> sellers;
-            Seller currentSeller = null;
+    private RMIService stub;
+    private Registry registry;
+    private HashMap<Integer, Seller> sellers;
+    private Seller currentSeller = null;
 
+    public void startInput() {
+        try {
             System.out.println("Welcome Seller!\nPlease use `help` to view available commands");
 
             Scanner scanner = new Scanner(System.in);
@@ -29,7 +41,7 @@ public class ClientSeller {
                     System.out.println("Available commands:\nauth create\nauth login\nauth show\nauction add\nauction list\nauction close");
                     continue;
                 }
-                sellers = stub.getSellers(); // Update list of sellers from server
+                this.sellers = stub.getSellers();
                 switch(splitted[0]) {
                     case "auth":
                         switch(splitted[1].toLowerCase()) {
@@ -81,57 +93,57 @@ public class ClientSeller {
                                 break;
                         }
                         break;
-                        case "auction":
-                            if (currentSeller == null) {
-                                System.out.println("Please login first");
-                                break;
-                            }
-                            switch(splitted[1].toLowerCase()) {
-                                case "add":
-                                    // Create auction for logged-in seller
-                                    if (splitted.length < 6) {
-                                        System.out.println("Please create an auction using the syntax: `add <startingPrice> <name> <description> <reserve>");
-                                    } else {
-                                        // splitted[0] and splitted[1] are the words "auction" and "add"
-                                        // splitted[2] = starting price
-                                        // splitted[3] = name of item
-                                        // splitted[4] = description of item
-                                        // splitted[5] = reserve price
-                                        int itemId = stub.createAuction(sellers.get(currentSeller.getId()), Double.parseDouble(splitted[2]), splitted[3], splitted[4], Double.parseDouble(splitted[5]));
-                                        System.out.println("Auction item created with ID: " + itemId);
-                                    }
-                                    break;
-                                case "list":
-                                    // List current auctions for the selected seller
-                                    HashMap<Integer, AuctionItem> auctionItems = stub.getAuctionItems();
-                                    for (AuctionItem item : auctionItems.values()) {
-                                        if (item.getSeller().getId().equals(currentSeller.getId())) {
-                                            System.out.println("ID: " + "'" + item.getId() + "'" + " Name: " + "'" + item.getName() + "'" + " Description: " + "'" + item.getDescription() + "'");
-                                        }
-                                    }
-                                    break;
-                                case "close":
-                                    if (splitted.length < 3) {
-                                        System.out.println("Please provide 3 parameters to close auction, `auction close <id>`");
-                                        break;
-                                    }
-                                    // Close the auction and flag buyer they've won
-                                    double hasClosed = stub.closeAuction(Integer.parseInt(splitted[2]), currentSeller);
-                                    AuctionItem item = stub.getAuctionItem(Integer.parseInt(splitted[2]));
-                                    if (hasClosed == 0) System.out.println("Auction has closed for "+item.getId()+". The winner was "+stub.getBuyers().get(item.getWinningBuyerId()).getName());
-                                    else if (hasClosed == -1) System.out.println("Item ID provided was not valid, use `auction list` to view current auctions");
-                                    else if (hasClosed == -2) System.out.println("You are not authorised to close this auction");
-                                    else if (hasClosed == -3) System.out.println("There are no bids on the item yet");
-                                    else if (hasClosed == -4) System.out.println("Failed to meet reserve price, max bid was: "+item.getHighestBid() + ". Reserve was "+item.getReserve());
-                                    break;
-                                case "bids":
-                                    ArrayList<Bid> bids = stub.getAuctionItems().get(Integer.parseInt(splitted[2])).getCurrentBids();
-                                    for (Bid bid : bids) {
-                                        System.out.println("Amount: "+bid.getBidAmount() + " Buyer: "+bid.getBuyer() + " For item: " + bid.getItemId());
-                                    }
-                                    break;
-                            }
+                    case "auction":
+                        if (currentSeller == null) {
+                            System.out.println("Please login first");
                             break;
+                        }
+                        switch(splitted[1].toLowerCase()) {
+                            case "add":
+                                // Create auction for logged-in seller
+                                if (splitted.length < 6) {
+                                    System.out.println("Please create an auction using the syntax: `add <startingPrice> <name> <description> <reserve>");
+                                } else {
+                                    // splitted[0] and splitted[1] are the words "auction" and "add"
+                                    // splitted[2] = starting price
+                                    // splitted[3] = name of item
+                                    // splitted[4] = description of item
+                                    // splitted[5] = reserve price
+                                    int itemId = stub.createAuction(sellers.get(currentSeller.getId()), Double.parseDouble(splitted[2]), splitted[3], splitted[4], Double.parseDouble(splitted[5]));
+                                    System.out.println("Auction item created with ID: " + itemId);
+                                }
+                                break;
+                            case "list":
+                                // List current auctions for the selected seller
+                                HashMap<Integer, AuctionItem> auctionItems = stub.getAuctionItems();
+                                for (AuctionItem item : auctionItems.values()) {
+                                    if (item.getSeller().getId().equals(currentSeller.getId())) {
+                                        System.out.println("ID: " + "'" + item.getId() + "'" + " Name: " + "'" + item.getName() + "'" + " Description: " + "'" + item.getDescription() + "'");
+                                    }
+                                }
+                                break;
+                            case "close":
+                                if (splitted.length < 3) {
+                                    System.out.println("Please provide 3 parameters to close auction, `auction close <id>`");
+                                    break;
+                                }
+                                // Close the auction and flag buyer they've won
+                                double hasClosed = stub.closeAuction(Integer.parseInt(splitted[2]), currentSeller);
+                                AuctionItem item = stub.getAuctionItem(Integer.parseInt(splitted[2]));
+                                if (hasClosed == 0) System.out.println("Auction has closed for "+item.getId()+". The winner was "+stub.getBuyers().get(item.getWinningBuyerId()).getName());
+                                else if (hasClosed == -1) System.out.println("Item ID provided was not valid, use `auction list` to view current auctions");
+                                else if (hasClosed == -2) System.out.println("You are not authorised to close this auction");
+                                else if (hasClosed == -3) System.out.println("There are no bids on the item yet");
+                                else if (hasClosed == -4) System.out.println("Failed to meet reserve price, max bid was: "+item.getHighestBid() + ". Reserve was "+item.getReserve());
+                                break;
+                            case "bids":
+                                ArrayList<Bid> bids = stub.getAuctionItems().get(Integer.parseInt(splitted[2])).getCurrentBids();
+                                for (Bid bid : bids) {
+                                    System.out.println("Amount: "+bid.getBidAmount() + " Buyer: "+bid.getBuyer() + " For item: " + bid.getItemId());
+                                }
+                                break;
+                        }
+                        break;
                     case "help":
                         // Need at least 3 parameters for information on commands e.g. `help auction create`
                         if (splitted.length < 3) {
@@ -169,9 +181,7 @@ public class ClientSeller {
                         break;
                 }
             }
-
-        } catch (Exception e) {
-            System.err.println("Client Exception "+e.toString());
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }
