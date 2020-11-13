@@ -171,7 +171,7 @@ public class ClientBuyer {
                             case "auth":
                                 switch(splitted[2].toLowerCase()) {
                                     case "login":
-                                        System.out.println("Login to a user account by providing their ID: `auth login <token>`");
+                                        System.out.println("Login to a user account by providing their token: `auth login <token>`");
                                         break;
                                     case "create":
                                         System.out.println("Create a user account using the following syntax: `auth create <username> <email>`");

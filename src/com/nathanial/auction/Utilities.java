@@ -9,8 +9,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
+import java.util.Random;
 
 public class Utilities {
+    // Generate a keypair based on RSA algorithm with key size of 2048 bits. Used for asymmetric authentication
     public static KeyPair generateKeyPair() {
         KeyPair keyPair = null;
         try {
@@ -37,6 +39,7 @@ public class Utilities {
         }
     }
 
+    // Generate an encrypted message with private key and return response
     public static byte[] performChallenge(PrivateKey privateKey, byte[] message) {
         byte[] response = null;
         try {
@@ -49,16 +52,23 @@ public class Utilities {
         return response;
     }
 
-    public static byte[] generateHash(String stringToHash) {
-        byte[] returnHash = null;
+    public static byte[] generateHash(byte[] input) {
+        byte[] returnHash = new byte[30];
         try {
-            byte[] message = stringToHash.getBytes();
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            returnHash = md.digest(message); // Hash the message using SHA-256
+            returnHash = md.digest(input); // Hash the message using SHA-256
         } catch(Exception e) {
             e.printStackTrace();
         }
         return returnHash;
+    }
+
+    // Generate random bytes
+    public static byte[] generateBytes() {
+        Random random = new Random();
+        byte[] bytes = new byte[30];
+        random.nextBytes(bytes);
+        return bytes;
     }
 
     public static void generateKey() {

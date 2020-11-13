@@ -5,6 +5,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Arrays;
+import java.util.Random;
 
 public class Seller implements Client {
     public Seller(Integer id) {
@@ -26,7 +27,7 @@ public class Seller implements Client {
     public boolean authoriseServer(RMIService stub) {
         boolean authorised = false;
         try {
-            byte[] messageHash = Utilities.generateHash("stringtoverifyserver");
+            byte[] messageHash = Utilities.generateHash(Utilities.generateBytes()); // Generate a SHA-256 hash of this string
 
             byte[] serverResponse = stub.challengeServer(messageHash); // Send the hash to the server, they encrypt it using their private key and return
             Cipher cipher = Cipher.getInstance("RSA");

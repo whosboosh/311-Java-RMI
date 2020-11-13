@@ -5,6 +5,7 @@ import javax.crypto.SealedObject;
 import java.security.*;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Random;
 
 public class ImplRMI implements RMIService {
     private HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
@@ -19,19 +20,25 @@ public class ImplRMI implements RMIService {
         KeyPair keyPair = Utilities.generateKeyPair();
         privateKey = keyPair.getPrivate();
         publicKey = keyPair.getPublic();
+        Utilities.generateKey();
     }
 
     public PublicKey getPublicKey() {
         return publicKey;
     }
 
+    // Challenge client to encrypt a string using their private key
+    // If the responded message can be decrypted by their public key then we know they are legitimate
     public boolean authoriseClient(Client client) {
         boolean returnVal = false;
         String name;
-        if (client.getClass().getName().equals("Seller")) name = "Seller";
+        // Get the class name so our message can be tailored for either a seller or buyer
+        if (client.getClass().getName().equals("com.nathanial.auction.Seller")) name = "Seller";
         else name = "Buyer";
         try {
-            byte[] messageHash = Utilities.generateHash( "stringtoverify"+client.getId()); // Challenge to send
+            // Utilities.generateBytes() generates random bytes for challenge based on rng
+            // We then hash those bytes using SHA-256
+            byte[] messageHash = Utilities.generateHash(Utilities.generateBytes()); // Challenge to send
 
             byte[] serverResponse = client.challengeClient(messageHash); // Send the hash to the client, they encrypt it using their private key and return
             Cipher cipher = Cipher.getInstance("RSA");
@@ -109,6 +116,7 @@ public class ImplRMI implements RMIService {
     }
 
     public int createAuction(Seller seller, double startingPrice, String name, String description, double reserve) {
+        // Generate ID for auction ID, just a sequentially generated ID based on the number of auction items
         int itemId = 0;
         for (int i = 0; i < auctionItems.size(); ++i) {
             if (auctionItems.get(i).getId() == i) itemId++;
@@ -143,6 +151,7 @@ public class ImplRMI implements RMIService {
         }
     }
 
+    // Method is synchronized to prevent two buyers to place bids at the same time and allow both of them to be processed if highest bid hasn't been set yet
     public synchronized double bidAuction(Bid bid) {
         // For an auction item with itemId, add bid to the currentBids HashMap
         AuctionItem item = auctionItems.get(bid.getItemId());

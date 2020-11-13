@@ -4,6 +4,7 @@ import javax.crypto.Cipher;
 import java.security.*;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Random;
 
 public class Buyer implements Client {
 
@@ -11,7 +12,7 @@ public class Buyer implements Client {
         this.name = name;
         this.email = email;
         this.id = id;
-        this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(name+email));
+        this.authToken = Base64.getEncoder().encodeToString(generateHash(name+email));
 
         // Generate public and private keys
         KeyPair keyPair = Utilities.generateKeyPair();
@@ -37,6 +38,17 @@ public class Buyer implements Client {
     public PublicKey getPublicKey() { return publicKey; }
     public String getAuthToken() { return authToken; }
 
+    private byte[] generateHash(String input) {
+        byte[] bytes = new byte[30];
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            bytes = md.digest(input.getBytes()); // Hash the message using SHA-256
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return bytes;
+    }
+
     /**
      * Challenge the server to encrypt hash using their private key, if we can decrypt it using their public key then we know they're real
      * @param stub stub to RMIService
@@ -44,7 +56,7 @@ public class Buyer implements Client {
     public boolean authoriseServer(RMIService stub) {
         boolean authorised = false;
         try {
-            byte[] messageHash = Utilities.generateHash("stringtoverifyserver"); // Generate a SHA-256 hash of this string
+            byte[] messageHash = Utilities.generateHash(Utilities.generateBytes()); // Generate a SHA-256 hash of a random byte array for challenge
 
             byte[] serverResponse = stub.challengeServer(messageHash); // Send the hash to the server, they encrypt it using their private key and return
             Cipher cipher = Cipher.getInstance("RSA");
@@ -75,11 +87,12 @@ public class Buyer implements Client {
         return Utilities.performChallenge(privateKey, message);
     }
 
+    // Ping server every second to see if won
     public void pollServerIfWon(RMIService stub, Integer itemId) {
         new Thread( new Runnable() {
             boolean hasSold = false;
             public void run() {
-                while (!hasSold) {
+                while (!hasSold) { // As long as the item hasn't been sold, keep checking if won
                     try {
                         AuctionItem item = stub.getAuctionItem(itemId);
                         hasSold = item.isSold();

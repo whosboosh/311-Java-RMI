@@ -164,7 +164,7 @@ public class ClientSeller {
     }
 
     /*
-    // Part 1 and 2 code for retreiving an auction item
+    // Part 1 and 2 code for retrieving an auction item
     public void getItem(RMIService stub, Integer itemId) {
         try {
             // Create a cipher using the AES encryption method
