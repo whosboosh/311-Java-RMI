@@ -84,10 +84,9 @@ public class Buyer implements Client {
                         AuctionItem item = stub.getAuctionItem(itemId);
                         hasSold = item.isSold();
                         if (hasSold) {
-                            if (item.getWinningBuyerId() != null) {
-                                if (item.getWinningBuyerId().equals(id)) System.out.println("You've won! ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
-                                else System.out.println("You've didn't win... ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
-                            }
+                            if (item.getWinningBuyerId() == null) System.out.println("Reserve was not met. The listing with ID: "+itemId+" has been closed.");
+                            else if (item.getWinningBuyerId().equals(id)) System.out.println("You've won! ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
+                            else System.out.println("You've didn't win... ID: " + item.getId() + " " + item.getName() + " " + item.getDescription());
                             break;
                         }
                         Thread.sleep(1000);

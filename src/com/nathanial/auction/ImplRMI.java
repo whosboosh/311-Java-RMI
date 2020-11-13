@@ -134,9 +134,10 @@ public class ImplRMI implements RMIService {
         }
         auctionItems.get(itemId).setSold(true); // Flag as sold, if reserve wasn't met no winner is set but still closes the auction
         if (highestBid.getBidAmount() <= auctionItems.get(itemId).getReserve()) {
+            System.out.println("Reserve was not met for item "+itemId);
             return -4; // Failed to meet reserve
         } else {
-            System.out.println(highestBid.getBuyer().getName()+" has won item "+auctionItems.get(itemId).getId());
+            System.out.println(highestBid.getBuyer().getName()+" has won item "+itemId);
             auctionItems.get(itemId).setWinningBuyerId(highestBid.getBuyer().getId()); // Mark winner as buyerId
             return 0;
         }
