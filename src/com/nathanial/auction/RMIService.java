@@ -1,3 +1,5 @@
+package com.nathanial.auction;
+
 import javax.crypto.SealedObject;
 import java.rmi.Remote;
 import java.rmi.RemoteException;

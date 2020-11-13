@@ -1,7 +1,7 @@
+package com.nathanial.auction;
+
 import javax.crypto.Cipher;
-import java.io.Serializable;
 import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Arrays;
@@ -33,14 +33,14 @@ public class Seller implements Client {
             cipher.init(Cipher.DECRYPT_MODE, stub.getPublicKey()); // Decrypt the message with servers public key
             byte[] digitalSignature = cipher.doFinal(serverResponse); // Get the decrypted value
             if (Arrays.equals(digitalSignature, messageHash)) {
-                System.out.println("Server is authorised");
+                System.out.println("com.nathanial.auction.Server is authorised");
                 // Now that server is authorised, the server still needs to authorise us.
                 // Call to server to authorise client, performs the same thing but in reverse
                 if (stub.authoriseClient(this)) {
-                    System.out.println("Server has authorised you");
+                    System.out.println("com.nathanial.auction.Server has authorised you");
                     authorised = true;
                 } else {
-                    System.out.println("Server failed to authorise you");
+                    System.out.println("com.nathanial.auction.Server failed to authorise you");
                     authorised = false;
                 }
             }

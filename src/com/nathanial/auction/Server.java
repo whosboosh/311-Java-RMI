@@ -1,3 +1,5 @@
+package com.nathanial.auction;
+
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -15,9 +17,9 @@ public class Server extends ImplRMI {
             Registry registry = LocateRegistry.createRegistry(1099); // Start registry
             registry.rebind("ServerRMI", stub); // Bind stub to registry on "ServerRMI"
 
-            System.out.println("Server Ready");
+            System.out.println("com.nathanial.auction.Server Ready");
         } catch (RemoteException e) {
-            System.err.println("Server exception "+e.toString());
+            System.err.println("com.nathanial.auction.Server exception "+e.toString());
             e.printStackTrace();
         }
     }

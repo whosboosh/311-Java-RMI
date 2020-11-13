@@ -1,3 +1,5 @@
+package com.nathanial.auction;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -37,7 +39,7 @@ public class AuctionItem implements Serializable {
     // Method is synchronized because we don't want more than 1 thread entering function at at time
     public void addBid(Bid bid) {
         currentBids.add(bid);
-        highestBidAmount = bid.getBidAmount(); // Record the highest amount, if this function is called then its already been validated in ImplRMI bidAuction()
+        highestBidAmount = bid.getBidAmount(); // Record the highest amount, if this function is called then its already been validated in com.nathanial.auction.ImplRMI bidAuction()
     }
     public void setSold(boolean isSold) { this.sold = isSold; }
     public boolean isSold() { return sold; }

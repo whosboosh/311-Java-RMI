@@ -1,8 +1,8 @@
+package com.nathanial.auction;
+
 import javax.crypto.Cipher;
 import javax.crypto.SealedObject;
-import java.rmi.RemoteException;
 import java.security.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -28,8 +28,8 @@ public class ImplRMI implements RMIService {
     public boolean authoriseClient(Client client) {
         boolean returnVal = false;
         String name;
-        if (client.getClass().getName().equals("Seller")) name = "Seller";
-        else name = "Buyer";
+        if (client.getClass().getName().equals("com.nathanial.auction.Seller")) name = "com.nathanial.auction.Seller";
+        else name = "com.nathanial.auction.Buyer";
         try {
             byte[] messageHash = Utilities.generateHash( "stringtoverify"+client.getId()); // Challenge to send
 
@@ -122,7 +122,7 @@ public class ImplRMI implements RMIService {
     public double closeAuction(int itemId, Client client) {
         // Work out who the highest bidder is
         if (auctionItems.get(itemId) == null) return -1; // Item doesn't exist
-        if (!auctionItems.get(itemId).getSeller().getId().equals(client.getId())) return -2; // Seller isn't authorised to close this auction
+        if (!auctionItems.get(itemId).getSeller().getId().equals(client.getId())) return -2; // com.nathanial.auction.Seller isn't authorised to close this auction
         if (auctionItems.get(itemId).getCurrentBids().isEmpty()) return -3; // No bids on item
         Bid highestBid = auctionItems.get(itemId).getCurrentBids().get(0);
         for (Bid bid : auctionItems.get(itemId).getCurrentBids()) {
@@ -150,7 +150,7 @@ public class ImplRMI implements RMIService {
         else if (bid.getBidAmount() <= item.getHighestBid()) return -3; // Check if bid is valid, highestBidAmount is always >= startingPrice
         item.addBid(bid);
         for (Bid i : item.getCurrentBids()) {
-            System.out.println("Amount: "+i.getBidAmount() + " Buyer: "+i.getBuyer().getName() + " For item: " + i.getItemId());
+            System.out.println("Amount: "+i.getBidAmount() + " com.nathanial.auction.Buyer: "+i.getBuyer().getName() + " For item: " + i.getItemId());
         }
         return 0;
     }

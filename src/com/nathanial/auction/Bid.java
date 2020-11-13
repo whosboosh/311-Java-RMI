@@ -1,3 +1,5 @@
+package com.nathanial.auction;
+
 import java.io.Serializable;
 
 public class Bid implements Serializable {
