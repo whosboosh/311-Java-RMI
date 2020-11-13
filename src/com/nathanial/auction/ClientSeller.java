@@ -29,7 +29,7 @@ public class ClientSeller {
 
     public void startInput() {
         try {
-            System.out.println("Welcome com.nathanial.auction.Seller!\nPlease use `help` to view available commands");
+            System.out.println("Welcome Seller!\nPlease use `help` to view available commands");
 
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
@@ -54,11 +54,11 @@ public class ClientSeller {
                                 // Add seller to sellers arraylist, use unique id to create new seller
                                 Seller testSeller = new Seller(sellerId);
                                 if (!testSeller.authoriseServer(stub)){ // Perform 5 stage challenge response between server and client
-                                    System.out.println("Failed to authorise com.nathanial.auction.Server, please try creating another account");
+                                    System.out.println("Failed to authorise Server, please try creating another account");
                                 } else {
                                     currentSeller = testSeller;
                                     stub.addSeller(currentSeller);
-                                    System.out.println("com.nathanial.auction.Seller account created with ID: " + sellerId);
+                                    System.out.println("Seller account created with ID: " + sellerId);
                                     System.out.println("Logged in as " + sellerId);
                                     break;
                                 }
@@ -139,7 +139,7 @@ public class ClientSeller {
                             case "bids":
                                 ArrayList<Bid> bids = stub.getAuctionItems().get(Integer.parseInt(splitted[2])).getCurrentBids();
                                 for (Bid bid : bids) {
-                                    System.out.println("Amount: "+bid.getBidAmount() + " com.nathanial.auction.Buyer: "+bid.getBuyer() + " For item: " + bid.getItemId());
+                                    System.out.println("Amount: "+bid.getBidAmount() + " Buyer: "+bid.getBuyer() + " For item: " + bid.getItemId());
                                 }
                                 break;
                         }
@@ -154,7 +154,7 @@ public class ClientSeller {
                             case "auction":
                                 switch(splitted[2].toLowerCase()) {
                                     case "add":
-                                        System.out.println("com.nathanial.auction.Bid on an auction item, `auction add <starting-price> <name> <reserve-price>`");
+                                        System.out.println("Bid on an auction item, `auction add <starting-price> <name> <reserve-price>`");
                                         break;
                                     case "list":
                                         System.out.println("List the current ongoing auctions for your seller account");
@@ -188,11 +188,11 @@ public class ClientSeller {
 
     /*
     // Part 1 and 2 code for retreiving an auction item
-    public void getItem(com.nathanial.auction.RMIService stub, Integer itemId) {
+    public void getItem(RMIService stub, Integer itemId) {
         try {
             // Create a cipher using the AES encryption method
             Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(cipher.ENCRYPT_MODE, com.nathanial.auction.Utilities.getKey());
+            cipher.init(cipher.ENCRYPT_MODE, Utilities.getKey());
 
             // Create a "SealedObject" containing the clientId. Not in use for part 2
             SealedObject sealedRequest = new SealedObject(new ClientRequest(1), cipher);
@@ -200,11 +200,11 @@ public class ClientSeller {
             SealedObject sealedResponse = stub.getSpec(itemId, sealedRequest);
 
             // Set the cipher mode to decrypt, decrypt the message sent from the server
-            cipher.init(cipher.DECRYPT_MODE, com.nathanial.auction.Utilities.getKey());
-            com.nathanial.auction.AuctionItem auctionItem = (com.nathanial.auction.AuctionItem) sealedResponse.getObject(cipher);
+            cipher.init(cipher.DECRYPT_MODE, Utilities.getKey());
+            AuctionItem auctionItem = (AuctionItem) sealedResponse.getObject(cipher);
             System.out.println("ID: " + "'"+auctionItem.getId()+"'" + " Name: " + "'"+auctionItem.getName()+"'" + " Description: " + "'"+auctionItem.getDescription()+"'");
         } catch(Exception e) {
-            System.err.println("com.nathanial.auction.Client Exception "+e.toString());
+            System.err.println("Client Exception "+e.toString());
             e.printStackTrace();
         }
     }*/

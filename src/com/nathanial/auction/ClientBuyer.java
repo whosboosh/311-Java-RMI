@@ -28,7 +28,7 @@ public class ClientBuyer {
 
     private void startInput() {
         try {
-            System.out.println("Welcome com.nathanial.auction.Buyer!\nPlease use `help` to view available commands");
+            System.out.println("Welcome Buyer!\nPlease use `help` to view available commands");
             Scanner scanner = new Scanner(System.in);
 
             // Loop user input
@@ -78,11 +78,11 @@ public class ClientBuyer {
                                 // Perform 5 stage challenge response between server and client
                                 if (!testBuyer.authoriseServer(stub)){
                                     // If failed authorisation, remove the buyer from the list
-                                    System.out.println("Failed to authorise com.nathanial.auction.Server, please try creating another account");
+                                    System.out.println("Failed to authorise Server, please try creating another account");
                                 } else {
                                     currentBuyer = testBuyer;
                                     stub.addBuyer(currentBuyer);
-                                    System.out.println("com.nathanial.auction.Buyer account created with ID: "+buyerId);
+                                    System.out.println("Buyer account created with ID: "+buyerId);
                                     System.out.println("Now logged-in as buyer: "+currentBuyer.getId()+","+currentBuyer.getName()+","+currentBuyer.getEmail());
                                 }
                                 break;
@@ -109,7 +109,7 @@ public class ClientBuyer {
                                     break;
                                 }
                                 Integer id = Integer.parseInt(splitted[3]);
-                                // com.nathanial.auction.Bid on an auction item (args[2]), create bid with the bid amount (args[1]), pass this as a reference to who the buyer is
+                                // Bid on an auction item (args[2]), create bid with the bid amount (args[1]), pass this as a reference to who the buyer is
                                 double result = stub.bidAuction(new Bid(Double.parseDouble(splitted[2]), currentBuyer, id));
                                 if (result == -1) {
                                     System.out.println("Item ID provided is not valid");
@@ -120,10 +120,10 @@ public class ClientBuyer {
                                     break;
                                 }
                                 else if (result == -3) {
-                                    System.out.println("com.nathanial.auction.Bid was not successful. Need to bid more than: "+stub.getAuctionItem(id).getHighestBid());
+                                    System.out.println("Bid was not successful. Need to bid more than: "+stub.getAuctionItem(id).getHighestBid());
                                     break;
                                 }
-                                System.out.println("com.nathanial.auction.Bid processed successfully");
+                                System.out.println("Bid processed successfully");
 
                                 // Check if this buyer has a bid on the item already, if they do return. This is because the pollServerIfWon function only needs to be run once per buyer per item
                                 int timesBidded = 0;
@@ -144,7 +144,7 @@ public class ClientBuyer {
                                 for (AuctionItem item : auctionItems.values()) {
                                     if (item.isSold()) continue; // Don't list item if sold
                                     System.out.println("ID: " + "'"+item.getId()+"'" + " Name: " + "'"+item.getName()+"'" + " Description: " + "'"+item.getDescription()+"'" +
-                                            " Current Highest com.nathanial.auction.Bid: "+item.getHighestBid());
+                                            " Current Highest Bid: "+item.getHighestBid());
                                 }
                                 break;
                         }
@@ -159,7 +159,7 @@ public class ClientBuyer {
                             case "auction":
                                 switch(splitted[2].toLowerCase()) {
                                     case "bid":
-                                        System.out.println("com.nathanial.auction.Bid on an auction item, `auction bid <amount> <id>`");
+                                        System.out.println("Bid on an auction item, `auction bid <amount> <id>`");
                                         break;
                                     case "list":
                                         System.out.println("List the current ongoing auctions");

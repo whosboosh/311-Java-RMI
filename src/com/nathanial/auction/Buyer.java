@@ -10,7 +10,7 @@ public class Buyer implements Client {
         this.name = name;
         this.email = email;
         this.id = id;
-        //this.authToken = Base64.getEncoder().encodeToString(com.nathanial.auction.Utilities.generateHash(name+email));
+        //this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(name+email));
 
         // Generate public and private keys
         KeyPair keyPair = Utilities.generateKeyPair();
@@ -38,26 +38,26 @@ public class Buyer implements Client {
 
     /**
      * Challenge the server to encrypt hash using their private key, if we can decrypt it using their public key then we know they're real
-     * @param stub
+     * @param stub stub to RMIService
      */
     public boolean authoriseServer(RMIService stub) {
         boolean authorised = false;
         try {
-            byte[] messageHash = Utilities.generateHash("stringtoverifyserver");
+            byte[] messageHash = Utilities.generateHash("stringtoverifyserver"); // Generate a SHA-256 hash of this string
 
             byte[] serverResponse = stub.challengeServer(messageHash); // Send the hash to the server, they encrypt it using their private key and return
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, stub.getPublicKey()); // Decrypt the message with servers public key
             byte[] digitalSignature = cipher.doFinal(serverResponse); // Get the decrypted value
             if (Arrays.equals(digitalSignature, messageHash)) {
-                System.out.println("com.nathanial.auction.Server is authorised");
+                System.out.println("Server is authorised");
                 // Now that server is authorised, the server still needs to authorise us.
                 // Call to server to authorise client, performs the same thing but in reverse
                 if (stub.authoriseClient(this)) {
-                    System.out.println("com.nathanial.auction.Server has authorised you");
+                    System.out.println("Server has authorised you");
                     authorised = true;
                 } else {
-                    System.out.println("com.nathanial.auction.Server failed to authorise you");
+                    System.out.println("Server failed to authorise you");
                     authorised = false;
                 }
             } else {
@@ -92,7 +92,7 @@ public class Buyer implements Client {
                         Thread.sleep(1000);
                     }
                     catch (Exception e) {
-                        System.err.println("com.nathanial.auction.Client Exception "+e.toString());
+                        System.err.println("Client Exception "+e.toString());
                         e.printStackTrace();
                     }
                 }
