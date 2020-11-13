@@ -50,17 +50,19 @@ public class ClientBuyer {
                                 }
                                 // Needs 3 commands to login, check if less than 3 and if true break
                                 if (splitted.length < 3) {
-                                    System.out.println("Please provide an id to login as");
+                                    System.out.println("Please provide a token to login as");
                                     break;
                                 } else {
-                                    Buyer tryBuyer = buyers.get(Integer.parseInt(splitted[2]));
-                                    if (tryBuyer == null) {
-                                        System.out.println("No seller with ID found");
-                                        break;
-                                    } else {
-                                        currentBuyer = tryBuyer;
-                                        System.out.println("Now logged in as: " + tryBuyer.getId());
+                                    boolean found = false;
+                                    for (Buyer buyer: buyers.values()) {
+                                        if (buyer.getAuthToken().equals(splitted[2])) {
+                                            currentBuyer = buyer;
+                                            System.out.println("Now logged in as: " + buyer.getName() +" "+ buyer.getEmail() +" "+buyer.getId());
+                                            found = true;
+                                            break;
+                                        }
                                     }
+                                    if (!found) System.out.println("No buyer with token found");
                                 }
                                 break;
                             case "create":
@@ -82,7 +84,7 @@ public class ClientBuyer {
                                 } else {
                                     currentBuyer = testBuyer;
                                     stub.addBuyer(currentBuyer);
-                                    System.out.println("Buyer account created with ID: "+buyerId);
+                                    System.out.println("Buyer account created with ID: "+buyerId+" And token: "+currentBuyer.getAuthToken());
                                     System.out.println("Now logged-in as buyer: "+currentBuyer.getId()+","+currentBuyer.getName()+","+currentBuyer.getEmail());
                                 }
                                 break;
@@ -169,7 +171,7 @@ public class ClientBuyer {
                             case "auth":
                                 switch(splitted[2].toLowerCase()) {
                                     case "login":
-                                        System.out.println("Login to a user account by providing their ID: `auth login <id>`");
+                                        System.out.println("Login to a user account by providing their ID: `auth login <token>`");
                                         break;
                                     case "create":
                                         System.out.println("Create a user account using the following syntax: `auth create <username> <email>`");

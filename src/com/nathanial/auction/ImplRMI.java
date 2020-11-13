@@ -28,8 +28,8 @@ public class ImplRMI implements RMIService {
     public boolean authoriseClient(Client client) {
         boolean returnVal = false;
         String name;
-        if (client.getClass().getName().equals("com.nathanial.auction.Seller")) name = "com.nathanial.auction.Seller";
-        else name = "com.nathanial.auction.Buyer";
+        if (client.getClass().getName().equals("Seller")) name = "Seller";
+        else name = "Buyer";
         try {
             byte[] messageHash = Utilities.generateHash( "stringtoverify"+client.getId()); // Challenge to send
 

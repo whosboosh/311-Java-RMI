@@ -37,7 +37,7 @@ public class ClientSeller {
                 String[] splitted = input.split("\\s+");
                 // Require user to enter more than 1 input
                 if (splitted.length < 2) {
-                    System.out.println("Available commands:\nauth create\nauth login\nauth show\nauction add\nauction list\nauction close");
+                    System.out.println("Available commands:\nauth create\n\nauth show\nauction add\nauction list\nauction close");
                     continue;
                 }
                 this.sellers = stub.getSellers();
@@ -62,26 +62,6 @@ public class ClientSeller {
                                     System.out.println("Logged in as " + sellerId);
                                     break;
                                 }
-                            case "login":
-                                if (sellers.isEmpty()) {
-                                    System.out.println("No accounts found, create one with 'auth create'");
-                                    break;
-                                }
-                                // Needs 3 commands to login, check if less than 3 and if true break
-                                if (splitted.length < 3) {
-                                    System.out.println("Please provide an id to login as");
-                                    break;
-                                } else {
-                                    Seller trySeller = sellers.get(Integer.parseInt(splitted[2]));
-                                    if (trySeller == null) {
-                                        System.out.println("No seller with ID found");
-                                        break;
-                                    } else {
-                                        currentSeller = trySeller;
-                                        System.out.println("Now logged in as: " + trySeller.getId());
-                                    }
-                                }
-                                break;
                             case "show":
                                 // Tell user who the curently logged in account is
                                 if (currentSeller == null) {

@@ -3,6 +3,7 @@ package com.nathanial.auction;
 import javax.crypto.Cipher;
 import java.security.*;
 import java.util.Arrays;
+import java.util.Base64;
 
 public class Buyer implements Client {
 
@@ -10,7 +11,7 @@ public class Buyer implements Client {
         this.name = name;
         this.email = email;
         this.id = id;
-        //this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(name+email));
+        this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(name+email));
 
         // Generate public and private keys
         KeyPair keyPair = Utilities.generateKeyPair();
