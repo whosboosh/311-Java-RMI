@@ -146,9 +146,6 @@ public class ClientSeller {
                                 break;
                             case "auth":
                                 switch(splitted[2].toLowerCase()) {
-                                    case "login":
-                                        System.out.println("Login to a user account by providing their ID: `auth login <id>`");
-                                        break;
                                     case "create":
                                         System.out.println("Create a user account using the following syntax: `auth create`");
                                         break;

@@ -94,7 +94,7 @@ public class ClientBuyer {
                                     System.out.println("Not logged in, either login or create an account");
                                     break;
                                 }
-                                System.out.println("Currently logged in as: "+currentBuyer.getId());
+                                System.out.println("Currently logged in as: " + currentBuyer.getName() +" "+ currentBuyer.getEmail() +" "+currentBuyer.getId());
                                 break;
                         }
                         break;
