@@ -43,6 +43,12 @@ public class Utilities {
     public static byte[] performChallenge(PrivateKey privateKey, byte[] message) {
         byte[] response = null;
         try {
+            /* Code for using signature class
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(privateKey);
+            signature.update(message);
+            return signature.sign();*/
+
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.ENCRYPT_MODE, privateKey);
             response = cipher.doFinal(message);

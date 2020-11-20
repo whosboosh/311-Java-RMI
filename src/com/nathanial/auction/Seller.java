@@ -37,7 +37,7 @@ public class Seller implements Client {
                 System.out.println("Server is authorised");
                 // Now that server is authorised, the server still needs to authorise us.
                 // Call to server to authorise client, performs the same thing but in reverse
-                if (stub.authoriseClient(this)) {
+                if (stub.authoriseSeller(id)) {
                     System.out.println("Server has authorised you");
                     authorised = true;
                 } else {

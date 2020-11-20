@@ -29,29 +29,50 @@ public class ImplRMI implements RMIService {
 
     // Challenge client to encrypt a string using their private key
     // If the responded message can be decrypted by their public key then we know they are legitimate
-    public boolean authoriseClient(Client client) {
+    public boolean authoriseSeller(int clientId) {
         boolean returnVal = false;
-        String name;
-        // Get the class name so our message can be tailored for either a seller or buyer
-        if (client.getClass().getName().equals("com.nathanial.auction.Seller")) name = "Seller";
-        else name = "Buyer";
         try {
             // Utilities.generateBytes() generates random bytes for challenge based on rng
             // We then hash those bytes using SHA-256
+            Seller seller = sellers.get(clientId);
             byte[] messageHash = Utilities.generateHash(Utilities.generateBytes()); // Challenge to send
-
-            byte[] serverResponse = client.challengeClient(messageHash); // Send the hash to the client, they encrypt it using their private key and return
+            byte[] serverResponse = seller.challengeClient(messageHash);
             Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, client.getPublicKey());
+            cipher.init(Cipher.DECRYPT_MODE, seller.getPublicKey());
             byte[] digitalSignature = cipher.doFinal(serverResponse); // Decrypt the response with client public key
             if (Arrays.equals(digitalSignature, messageHash)) {
-                System.out.println(name+" "+client.getId()+" is authorised");
+                System.out.println("Seller "+seller.getId()+" is authorised");
                 returnVal = true;
             } else {
-                System.out.println("Failed to authorise"+name+" "+client.getId());
+                System.out.println("Failed to authorise seller "+seller.getId());
                 returnVal = false;
             }
-        } catch (Exception e) {
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return returnVal;
+    }
+    // Challenge client to encrypt a string using their private key
+    // If the responded message can be decrypted by their public key then we know they are legitimate
+    public boolean authoriseBuyer(int clientId) {
+        boolean returnVal = false;
+        try {
+            // Utilities.generateBytes() generates random bytes for challenge based on rng
+            // We then hash those bytes using SHA-256
+            Buyer buyer = buyers.get(clientId);
+            byte[] messageHash = Utilities.generateHash(Utilities.generateBytes()); // Challenge to send
+            byte[] serverResponse = buyer.challengeClient(messageHash);
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.DECRYPT_MODE, buyer.getPublicKey());
+            byte[] digitalSignature = cipher.doFinal(serverResponse); // Decrypt the response with client public key
+            if (Arrays.equals(digitalSignature, messageHash)) {
+                System.out.println("Seller "+buyer.getId()+" is authorised");
+                returnVal = true;
+            } else {
+                System.out.println("Failed to authorise buyer "+buyer.getId());
+                returnVal = false;
+            }
+        } catch(Exception e) {
             e.printStackTrace();
         }
         return returnVal;
