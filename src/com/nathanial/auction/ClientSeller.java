@@ -24,7 +24,7 @@ public class ClientSeller {
 
     private RMIService stub;
     private Registry registry;
-    private HashMap<Integer, Seller> sellers;
+    private ArrayList<Integer> sellers = new ArrayList<>();
     private Seller currentSeller = null;
 
     public void startInput() {
@@ -48,7 +48,7 @@ public class ClientSeller {
                                 // Create a new seller with unique id
                                 Integer sellerId = 0;
                                 for (int i = 0; i < sellers.size(); ++i) {
-                                    if (sellers.get(i).getId() == i) sellerId++;
+                                    if (sellers.get(i) == i) sellerId++;
                                     else break;
                                 }
                                 // Add seller to sellers arraylist, use unique id to create new seller
@@ -57,13 +57,13 @@ public class ClientSeller {
                                     System.out.println("Failed to authorise Server, please try creating another account");
                                 } else {
                                     currentSeller = testSeller;
-                                    stub.addSeller(currentSeller);
+                                    stub.addSeller(currentSeller.getId());
                                     System.out.println("Seller account created with ID: " + sellerId);
                                     System.out.println("Logged in as " + sellerId);
                                     break;
                                 }
                             case "show":
-                                // Tell user who the curently logged in account is
+                                // Tell user who the currently logged in account is
                                 if (currentSeller == null) {
                                     System.out.println("Not logged in, either login or create an account");
                                     break;
@@ -89,7 +89,7 @@ public class ClientSeller {
                                     // splitted[4] = reserve price
                                     System.out.println("Item Description: ");
                                     String description = scanner.nextLine();
-                                    int itemId = stub.createAuction(sellers.get(currentSeller.getId()), Double.parseDouble(splitted[2]), splitted[3], description, Double.parseDouble(splitted[4]));
+                                    int itemId = stub.createAuction(currentSeller.getId(), Double.parseDouble(splitted[2]), splitted[3], description, Double.parseDouble(splitted[4]));
                                     System.out.println("Auction item created with ID: " + itemId);
                                 }
                                 break;
@@ -97,7 +97,7 @@ public class ClientSeller {
                                 // List current auctions for the selected seller
                                 HashMap<Integer, AuctionItem> auctionItems = stub.getAuctionItems();
                                 for (AuctionItem item : auctionItems.values()) {
-                                    if (item.getSeller().getId().equals(currentSeller.getId())) {
+                                    if (item.getSellerId() == currentSeller.getId()) {
                                         System.out.println("ID: " + "'" + item.getId() + "'" + " Name: " + "'" + item.getName() + "'" + " Description: " + "'" + item.getDescription() + "'");
                                     }
                                 }
@@ -108,9 +108,9 @@ public class ClientSeller {
                                     break;
                                 }
                                 // Close the auction and flag buyer they've won
-                                double hasClosed = stub.closeAuction(Integer.parseInt(splitted[2]), currentSeller);
+                                double hasClosed = stub.closeAuction(Integer.parseInt(splitted[2]), currentSeller.getId());
                                 AuctionItem item = stub.getAuctionItem(Integer.parseInt(splitted[2]));
-                                if (hasClosed == 0) System.out.println("Auction has closed for "+item.getId()+". The winner was "+stub.getBuyers().get(item.getWinningBuyerId()).getName());
+                                if (hasClosed == 0) System.out.println("Auction has closed for "+item.getId()+". The winner was "+stub.getBuyers().get(item.getWinningBuyerId()));
                                 else if (hasClosed == -1) System.out.println("Item ID provided was not valid, use `auction list` to view current auctions");
                                 else if (hasClosed == -2) System.out.println("You are not authorised to close this auction");
                                 else if (hasClosed == -3) System.out.println("There are no bids on the item yet");
@@ -119,7 +119,7 @@ public class ClientSeller {
                             case "bids":
                                 ArrayList<Bid> bids = stub.getAuctionItems().get(Integer.parseInt(splitted[2])).getCurrentBids();
                                 for (Bid bid : bids) {
-                                    System.out.println("Amount: "+bid.getBidAmount() + " Buyer: "+bid.getBuyer().getName()+ " For item: " + bid.getItemId());
+                                    System.out.println("Amount: "+bid.getBidAmount() + " Buyer: "+bid.getBuyerId()+ " For item: " + bid.getItemId());
                                 }
                                 break;
                         }

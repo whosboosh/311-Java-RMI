@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class ImplRMI implements RMIService {
     private HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
-    private HashMap<Integer, Seller> sellers = new HashMap<>();
+    private ArrayList<Integer> sellers = new ArrayList<>();
     private ArrayList<Integer> buyers = new ArrayList<>();
     private HashMap<Integer, byte[]> messageHashes = new HashMap<>();
 
@@ -31,42 +31,17 @@ public class ImplRMI implements RMIService {
 
     // Challenge client to encrypt a string using their private key
     // If the responded message can be decrypted by their public key then we know they are legitimate
-    public boolean authoriseSeller(int clientId) {
-        boolean returnVal = false;
-        try {
-            // Utilities.generateBytes() generates random bytes for challenge based on rng
-            // We then hash those bytes using SHA-256
-            Seller seller = sellers.get(clientId);
-            byte[] messageHash = Utilities.generateHash(Utilities.generateBytes()); // Challenge to send
-            byte[] serverResponse = seller.challengeClient(messageHash);
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, seller.getPublicKey());
-            byte[] digitalSignature = cipher.doFinal(serverResponse); // Decrypt the response with client public key
-            if (Arrays.equals(digitalSignature, messageHash)) {
-                System.out.println("Seller "+seller.getId()+" is authorised");
-                returnVal = true;
-            } else {
-                System.out.println("Failed to authorise seller "+seller.getId());
-                returnVal = false;
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return returnVal;
-    }
-    // Challenge client to encrypt a string using their private key
-    // If the responded message can be decrypted by their public key then we know they are legitimate
-    public boolean authoriseBuyer(byte[] encryptedHash, PublicKey publicKey, int clientId) {
+    public boolean authoriseClient(byte[] encryptedHash, PublicKey publicKey, int clientId) {
         boolean returnVal = false;
         try {
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, publicKey);
             byte[] digitalSignature = cipher.doFinal(encryptedHash); // Decrypt the response with client public key
             if (Arrays.equals(digitalSignature, messageHashes.get(clientId))) {
-                System.out.println("Seller "+clientId+" is authorised");
+                System.out.println("Client "+clientId+" is authorised");
                 returnVal = true;
             } else {
-                System.out.println("Failed to authorise buyer "+clientId);
+                System.out.println("Failed to authorise client "+clientId);
                 returnVal = false;
             }
         } catch(Exception e) {
@@ -100,7 +75,7 @@ public class ImplRMI implements RMIService {
         return auctionItems;
     }
 
-    public HashMap<Integer, Seller> getSellers() {
+    public ArrayList<Integer> getSellers() {
         return sellers;
     }
 
@@ -112,8 +87,8 @@ public class ImplRMI implements RMIService {
         buyers.add(buyerId);
     }
 
-    public void addSeller(Seller seller) {
-        sellers.put(seller.getId(), seller);
+    public void addSeller(int sellerId) {
+        sellers.add(sellerId);
     }
 
     // Return auction item with provided item Id
@@ -141,22 +116,22 @@ public class ImplRMI implements RMIService {
         return auctionItems.get(id);
     }
 
-    public int createAuction(Seller seller, double startingPrice, String name, String description, double reserve) {
+    public int createAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
         // Generate ID for auction ID, just a sequentially generated ID based on the number of auction items
         int itemId = 0;
         for (int i = 0; i < auctionItems.size(); ++i) {
             if (auctionItems.get(i).getId() == i) itemId++;
             else break;
         }
-        auctionItems.put(itemId, new AuctionItem(name, description, reserve, startingPrice, itemId, seller));
+        auctionItems.put(itemId, new AuctionItem(name, description, reserve, startingPrice, itemId, sellerId));
         System.out.println("Added item " + itemId);
         return itemId;
     }
 
-    public double closeAuction(int itemId, Client client) {
+    public double closeAuction(int itemId, int clientId) {
         // Work out who the highest bidder is
         if (auctionItems.get(itemId) == null) return -1; // Item doesn't exist
-        if (!auctionItems.get(itemId).getSeller().getId().equals(client.getId())) return -2; // Seller isn't authorised to close this auction
+        if (auctionItems.get(itemId).getSellerId() != clientId) return -2; // Seller isn't authorised to close this auction
         if (auctionItems.get(itemId).getCurrentBids().isEmpty()) return -3; // No bids on item
         Bid highestBid = auctionItems.get(itemId).getCurrentBids().get(0);
         for (Bid bid : auctionItems.get(itemId).getCurrentBids()) {

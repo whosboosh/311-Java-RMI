@@ -4,14 +4,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class AuctionItem implements Serializable {
-    AuctionItem(String name, String description, double reserve, double startingPrice, Integer id, Seller seller) {
+    AuctionItem(String name, String description, double reserve, double startingPrice, int id, int sellerId) {
         this.name = name;
         this.description = description;
         this.reserveAmount = reserve;
         this.startingPrice = startingPrice;
         this.highestBidAmount = startingPrice;
         this.id = id;
-        this.seller = seller;
+        this.sellerId = sellerId;
     }
     private String description;
     private String name;
@@ -21,7 +21,7 @@ public class AuctionItem implements Serializable {
     private ArrayList<Bid> currentBids = new ArrayList<>();
     private double highestBidAmount;
     private Integer winningBuyerId = null;
-    private Seller seller;
+    private int sellerId;
     private boolean sold = false;
 
     public String getName() {
@@ -52,5 +52,5 @@ public class AuctionItem implements Serializable {
     public Integer getWinningBuyerId() {
         return winningBuyerId;
     }
-    public Seller getSeller() { return seller; }
+    public int getSellerId() { return sellerId; }
 }

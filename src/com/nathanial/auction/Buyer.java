@@ -74,7 +74,7 @@ public class Buyer implements Client {
                 // Call to server to authorise client, performs the same thing but in reverse
                 byte[] serverHash = stub.generateMessage(id);
                 byte[] encryptedHash = Utilities.performChallenge(privateKey, serverHash);
-                if (stub.authoriseBuyer(encryptedHash, publicKey, id)) {
+                if (stub.authoriseClient(encryptedHash, publicKey, id)) {
                     System.out.println("Server has authorised you");
                     authorised = true;
                 } else {
