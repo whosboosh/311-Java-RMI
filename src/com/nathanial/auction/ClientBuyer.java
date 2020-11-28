@@ -90,7 +90,7 @@ public class ClientBuyer {
                                 }
                                 Integer id = Integer.parseInt(splitted[3]);
                                 // Bid on an auction item (args[2]), create bid with the bid amount (args[1]), pass this as a reference to who the buyer is
-                                double result = stub.bidAuction(new Bid(Double.parseDouble(splitted[2]), currentBuyer, id));
+                                double result = stub.bidAuction(new Bid(Double.parseDouble(splitted[2]), currentBuyer.getId(), id));
                                 if (result == -1) {
                                     System.out.println("Item ID provided is not valid");
                                     break;
@@ -109,7 +109,7 @@ public class ClientBuyer {
                                 int timesBidded = 0;
                                 ArrayList<Bid> currentBids = stub.getAuctionItem(id).getCurrentBids();
                                 for (Bid bid : currentBids) {
-                                    if (bid.getBuyer().getId().equals(currentBuyer.getId())) {
+                                    if (bid.getBuyerId() == currentBuyer.getId()) {
                                         timesBidded++;
                                     }
                                 }

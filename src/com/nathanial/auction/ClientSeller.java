@@ -119,7 +119,7 @@ public class ClientSeller {
                             case "bids":
                                 ArrayList<Bid> bids = stub.getAuctionItems().get(Integer.parseInt(splitted[2])).getCurrentBids();
                                 for (Bid bid : bids) {
-                                    System.out.println("Amount: "+bid.getBidAmount() + " Buyer: "+bid.getBuyer() + " For item: " + bid.getItemId());
+                                    System.out.println("Amount: "+bid.getBidAmount() + " Buyer: "+bid.getBuyer().getName()+ " For item: " + bid.getItemId());
                                 }
                                 break;
                         }

@@ -171,8 +171,8 @@ public class ImplRMI implements RMIService {
             System.out.println("Reserve was not met for item "+itemId);
             return -4; // Failed to meet reserve
         } else {
-            System.out.println(highestBid.getBuyer().getName()+" has won item "+itemId);
-            auctionItems.get(itemId).setWinningBuyerId(highestBid.getBuyer().getId()); // Mark winner as buyerId
+            System.out.println(highestBid.getBuyerId()+" has won item "+itemId);
+            auctionItems.get(itemId).setWinningBuyerId(highestBid.getBuyerId()); // Mark winner as buyerId
             return 0;
         }
     }
@@ -186,7 +186,7 @@ public class ImplRMI implements RMIService {
         else if (bid.getBidAmount() <= item.getHighestBid()) return -3; // Check if bid is valid, highestBidAmount is always >= startingPrice
         item.addBid(bid);
         for (Bid i : item.getCurrentBids()) {
-            System.out.println("Amount: "+i.getBidAmount() + " Buyer: "+i.getBuyer().getName() + " For item: " + i.getItemId());
+            System.out.println("Amount: "+i.getBidAmount() + " Buyer: "+i.getBuyerId() + " For item: " + i.getItemId());
         }
         return 0;
     }
