@@ -4,15 +4,16 @@ import javax.crypto.SealedObject;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public interface RMIService extends Remote {
     public AuctionItem getSpec(int itemId, int clientId) throws RemoteException;
     public SealedObject getSpec(int itemId, SealedObject clientRequest) throws RemoteException;
 
-    public HashMap<Integer, Buyer> getBuyers() throws RemoteException;
+    public ArrayList<Integer> getBuyers() throws RemoteException;
     public HashMap<Integer, Seller> getSellers() throws RemoteException;
-    public void addBuyer(Buyer buyer) throws RemoteException;
+    public void addBuyer(int buyerId) throws RemoteException;
     public void addSeller(Seller selller) throws RemoteException;
     public HashMap<Integer, AuctionItem> getAuctionItems() throws RemoteException;
     public AuctionItem getAuctionItem(int id) throws RemoteException;

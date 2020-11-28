@@ -11,8 +11,7 @@ import java.util.Random;
 public class ImplRMI implements RMIService {
     private HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
     private HashMap<Integer, Seller> sellers = new HashMap<>();
-    private HashMap<Integer, Buyer> buyers = new HashMap<>();
-    private ArrayList<Integer> buyersIds = new ArrayList<>();
+    private ArrayList<Integer> buyers = new ArrayList<>();
     private HashMap<Integer, byte[]> messageHashes = new HashMap<>();
 
     private PrivateKey privateKey;
@@ -101,16 +100,16 @@ public class ImplRMI implements RMIService {
         return auctionItems;
     }
 
-    public HashMap<Integer, Buyer> getBuyers() {
-        return buyers;
-    }
-
     public HashMap<Integer, Seller> getSellers() {
         return sellers;
     }
 
-    public void addBuyer(Buyer buyer) {
-        buyers.put(buyer.getId(), buyer);
+    public ArrayList<Integer> getBuyers() {
+        return buyers;
+    }
+
+    public void addBuyer(int buyerId) {
+        buyers.add(buyerId);
     }
 
     public void addSeller(Seller seller) {
