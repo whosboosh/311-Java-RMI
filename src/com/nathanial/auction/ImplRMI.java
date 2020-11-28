@@ -3,6 +3,7 @@ package com.nathanial.auction;
 import javax.crypto.Cipher;
 import javax.crypto.SealedObject;
 import java.security.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
@@ -11,6 +12,8 @@ public class ImplRMI implements RMIService {
     private HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
     private HashMap<Integer, Seller> sellers = new HashMap<>();
     private HashMap<Integer, Buyer> buyers = new HashMap<>();
+    private ArrayList<Integer> buyersIds = new ArrayList<>();
+    private HashMap<Integer, byte[]> messageHashes = new HashMap<>();
 
     private PrivateKey privateKey;
     private PublicKey publicKey;
@@ -54,28 +57,31 @@ public class ImplRMI implements RMIService {
     }
     // Challenge client to encrypt a string using their private key
     // If the responded message can be decrypted by their public key then we know they are legitimate
-    public boolean authoriseBuyer(int clientId) {
+    public boolean authoriseBuyer(byte[] encryptedHash, PublicKey publicKey, int clientId) {
         boolean returnVal = false;
         try {
-            // Utilities.generateBytes() generates random bytes for challenge based on rng
-            // We then hash those bytes using SHA-256
-            Buyer buyer = buyers.get(clientId);
-            byte[] messageHash = Utilities.generateHash(Utilities.generateBytes()); // Challenge to send
-            byte[] serverResponse = buyer.challengeClient(messageHash);
             Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, buyer.getPublicKey());
-            byte[] digitalSignature = cipher.doFinal(serverResponse); // Decrypt the response with client public key
-            if (Arrays.equals(digitalSignature, messageHash)) {
-                System.out.println("Seller "+buyer.getId()+" is authorised");
+            cipher.init(Cipher.DECRYPT_MODE, publicKey);
+            byte[] digitalSignature = cipher.doFinal(encryptedHash); // Decrypt the response with client public key
+            if (Arrays.equals(digitalSignature, messageHashes.get(clientId))) {
+                System.out.println("Seller "+clientId+" is authorised");
                 returnVal = true;
             } else {
-                System.out.println("Failed to authorise buyer "+buyer.getId());
+                System.out.println("Failed to authorise buyer "+clientId);
                 returnVal = false;
             }
         } catch(Exception e) {
             e.printStackTrace();
         }
         return returnVal;
+    }
+
+    public byte[] generateMessage(int clientId) {
+        // Utilities.generateBytes() generates random bytes for challenge based on rng
+        // We then hash those bytes using SHA-256
+        byte[] messageHash = Utilities.generateHash(Utilities.generateBytes());
+        messageHashes.put(clientId, messageHash);
+        return messageHash;
     }
 
 

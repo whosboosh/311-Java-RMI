@@ -13,11 +13,6 @@ public class Buyer implements Client {
         this.email = email;
         this.id = id;
         this.authToken = Base64.getEncoder().encodeToString(generateHash(name+email));
-
-        // Generate public and private keys
-        KeyPair keyPair = Utilities.generateKeyPair();
-        privateKey = keyPair.getPrivate();
-        publicKey = keyPair.getPublic();
     }
     private String name;
     private String email;
@@ -37,6 +32,12 @@ public class Buyer implements Client {
     }
     public PublicKey getPublicKey() { return publicKey; }
     public String getAuthToken() { return authToken; }
+    public void generateKeys() {
+        // Generate public and private keys
+        KeyPair keyPair = Utilities.generateKeyPair();
+        privateKey = keyPair.getPrivate();
+        publicKey = keyPair.getPublic();
+    }
 
     private byte[] generateHash(String input) {
         byte[] bytes = new byte[30];
@@ -57,16 +58,13 @@ public class Buyer implements Client {
         boolean authorised = false;
         try {
             byte[] messageHash = Utilities.generateHash(Utilities.generateBytes()); // Generate a SHA-256 hash of a random byte array for challenge
-
             byte[] serverResponse = stub.challengeServer(messageHash); // Send the hash to the server, they encrypt it using their private key and return
-
             /* With signature class
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initVerify(publicKey);
             signature.update(messageHash);
             boolean isCorrect = signature.verify(serverResponse); // Verifies against message hash that's passed in from signature.update()
             */
-
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, stub.getPublicKey()); // Decrypt the message with servers public key
             byte[] digitalSignature = cipher.doFinal(serverResponse); // Get the decrypted value
@@ -74,7 +72,9 @@ public class Buyer implements Client {
                 System.out.println("Server is authorised");
                 // Now that server is authorised, the server still needs to authorise us.
                 // Call to server to authorise client, performs the same thing but in reverse
-                if (stub.authoriseBuyer(id)) {
+                byte[] serverHash = stub.generateMessage(id);
+                byte[] encryptedHash = Utilities.performChallenge(privateKey, serverHash);
+                if (stub.authoriseBuyer(encryptedHash, publicKey, id)) {
                     System.out.println("Server has authorised you");
                     authorised = true;
                 } else {

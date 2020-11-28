@@ -10,12 +10,6 @@ import java.util.Random;
 public class Seller implements Client {
     public Seller(Integer id) {
         this.id = id;
-
-        // Generate public and private keys
-        KeyPair keyPair = Utilities.generateKeyPair();
-        privateKey = keyPair.getPrivate();
-        publicKey = keyPair.getPublic();
-
     }
     private Integer id;
     private PrivateKey privateKey;
@@ -23,6 +17,13 @@ public class Seller implements Client {
 
     public Integer getId() {return id;}
     public PublicKey getPublicKey() { return publicKey; }
+
+    public void generateKeys() {
+        // Generate public and private keys
+        KeyPair keyPair = Utilities.generateKeyPair();
+        privateKey = keyPair.getPrivate();
+        publicKey = keyPair.getPublic();
+    }
 
     public boolean authoriseServer(RMIService stub) {
         boolean authorised = false;
