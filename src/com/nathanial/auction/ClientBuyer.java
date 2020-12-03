@@ -1,5 +1,6 @@
 package com.nathanial.auction;
 
+import javax.rmi.CORBA.Util;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.HashMap;
@@ -22,7 +23,6 @@ public class ClientBuyer {
         }
     }
 
-    private ArrayList<Integer> buyers = new ArrayList<>();
     private Buyer currentBuyer = null;
     private RMIService stub;
 
@@ -39,25 +39,21 @@ public class ClientBuyer {
                     System.out.println("Available commands:\nauction bid\nauction list\nauth create\nauth show");
                     continue;
                 }
-                this.buyers = stub.getBuyers(); // Update list of buyers from server
+                ArrayList<Integer> buyers = stub.getBuyers(); // Update list of buyers from server
                 switch(splitted[0].toLowerCase()) {
                     case "auth":
                         switch(splitted[1].toLowerCase()) {
                             case "create":
                                 if (splitted.length < 4) {
-                                    System.out.println("Please cr eate a buyer account using the syntax: `auth create <name> <email>`");
+                                    System.out.println("Please create a buyer account using the syntax: `auth create <name> <email>`");
                                     break;
                                 }
                                 // Create a new buyer with unique id
-                                Integer buyerId = 0;
-                                for (int i = 0; i < buyers.size(); ++i) {
-                                    if (buyers.get(i) == i) buyerId++;
-                                    else break;
-                                }
+                                int buyerId = Utilities.getNextId(buyers);
                                 Buyer testBuyer = new Buyer(splitted[2], splitted[3], buyerId);
                                 // Perform 5 stage challenge response between server and client
                                 if (!testBuyer.authoriseServer(stub)){
-                                    // If failed authorisation, remove the buyer from the list
+                                    // If failed authorisation, don't add the buyer to list
                                     System.out.println("Failed to authorise Server, please try creating another account");
                                 } else {
                                     currentBuyer = testBuyer;
@@ -88,7 +84,7 @@ public class ClientBuyer {
                                     System.out.println("Please bid using the syntax: 'auction bid <amount> <id>'");
                                     break;
                                 }
-                                Integer id = Integer.parseInt(splitted[3]);
+                                int id = Integer.parseInt(splitted[3]);
                                 // Bid on an auction item (args[2]), create bid with the bid amount (args[1]), pass this as a reference to who the buyer is
                                 double result = stub.bidAuction(new Bid(Double.parseDouble(splitted[2]), currentBuyer.getId(), id));
                                 if (result == -1) {

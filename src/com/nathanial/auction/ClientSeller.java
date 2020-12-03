@@ -1,5 +1,6 @@
 package com.nathanial.auction;
 
+import javax.rmi.CORBA.Util;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public class ClientSeller {
     public ClientSeller() {
         try {
             // Find the registry
-            registry = LocateRegistry.getRegistry(1099);
+            Registry registry = LocateRegistry.getRegistry(1099);
             stub = (RMIService) registry.lookup("ServerRMI"); // Create a stub based on the location of "ServerRMI" in the registry
         } catch (Exception e) {
             e.printStackTrace();
@@ -23,8 +24,6 @@ public class ClientSeller {
     }
 
     private RMIService stub;
-    private Registry registry;
-    private ArrayList<Integer> sellers = new ArrayList<>();
     private Seller currentSeller = null;
 
     public void startInput() {
@@ -40,17 +39,13 @@ public class ClientSeller {
                     System.out.println("Available commands:\nauth create\n\nauth show\nauction add\nauction list\nauction close");
                     continue;
                 }
-                this.sellers = stub.getSellers();
+                ArrayList<Integer> sellers = stub.getSellers();
                 switch(splitted[0]) {
                     case "auth":
                         switch(splitted[1].toLowerCase()) {
                             case "create":
                                 // Create a new seller with unique id
-                                Integer sellerId = 0;
-                                for (int i = 0; i < sellers.size(); ++i) {
-                                    if (sellers.get(i) == i) sellerId++;
-                                    else break;
-                                }
+                                int sellerId = Utilities.getNextId(sellers);
                                 // Add seller to sellers arraylist, use unique id to create new seller
                                 Seller testSeller = new Seller(sellerId);
                                 if (!testSeller.authoriseServer(stub)){ // Perform 5 stage challenge response between server and client

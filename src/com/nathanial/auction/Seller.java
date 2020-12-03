@@ -5,25 +5,27 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Random;
 
 public class Seller implements Client {
     public Seller(Integer id) {
         this.id = id;
-    }
-    private Integer id;
-    private PrivateKey privateKey;
-    private PublicKey publicKey;
+        this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(id.toString().getBytes()));
 
-    public Integer getId() {return id;}
-    public PublicKey getPublicKey() { return publicKey; }
-
-    public void generateKeys() {
         // Generate public and private keys
         KeyPair keyPair = Utilities.generateKeyPair();
         privateKey = keyPair.getPrivate();
         publicKey = keyPair.getPublic();
     }
+    private Integer id;
+    private PrivateKey privateKey;
+    private PublicKey publicKey;
+    private String authToken;
+
+    public Integer getId() {return id;}
+    public PublicKey getPublicKey() { return publicKey; }
+    public String getAuthToken() { return authToken; }
 
     public boolean authoriseServer(RMIService stub) {
         boolean authorised = false;
@@ -46,7 +48,7 @@ public class Seller implements Client {
                 // Call to server to authorise client, performs the same thing but in reverse
                 byte[] serverHash = stub.generateMessage(id);
                 byte[] encryptedHash = Utilities.performChallenge(privateKey, serverHash);
-                if (stub.authoriseClient(encryptedHash, publicKey, id)) {
+                if (stub.authoriseClient(encryptedHash, publicKey, id, "Seller")) {
                     System.out.println("Server has authorised you");
                     authorised = true;
                 } else {

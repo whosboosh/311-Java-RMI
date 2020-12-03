@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Utilities {
@@ -114,5 +115,15 @@ public class Utilities {
             e.printStackTrace();
         }
         return key;
+    }
+
+    // Returns a new unique id based on the index of the already existing items
+    public static int getNextId(ArrayList<Integer> array) {
+        int id = 0;
+        for (int i = 0; i < array.size(); ++i) {
+            if (array.get(i) == i) id++;
+            else break;
+        }
+        return id;
     }
 }

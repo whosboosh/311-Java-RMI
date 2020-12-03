@@ -20,7 +20,7 @@ public interface RMIService extends Remote {
     public int createAuction(int sellerId, double startingPrice, String description, String name, double reserve) throws RemoteException;
     public double bidAuction(Bid bid) throws RemoteException;
     public double closeAuction(int itemId, int clientId) throws RemoteException;
-    public boolean authoriseClient(byte[] encryptedHash, PublicKey publicKey, int clientId) throws RemoteException;
+    public boolean authoriseClient(byte[] encryptedHash, PublicKey publicKey, int clientId, String type) throws RemoteException;
     public byte[] challengeServer(byte[] message) throws RemoteException;
     public PublicKey getPublicKey() throws RemoteException;
     public void removeBuyer(int id) throws RemoteException;

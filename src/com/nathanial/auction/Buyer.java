@@ -12,7 +12,13 @@ public class Buyer implements Client {
         this.name = name;
         this.email = email;
         this.id = id;
-        this.authToken = Base64.getEncoder().encodeToString(generateHash(name+email));
+        String combinedAuth = name+email;
+        this.authToken = Base64.getEncoder().encodeToString(Utilities.generateHash(combinedAuth.getBytes()));
+
+        // Generate public and private keys
+        KeyPair keyPair = Utilities.generateKeyPair();
+        privateKey = keyPair.getPrivate();
+        publicKey = keyPair.getPublic();
     }
     private String name;
     private String email;
@@ -32,23 +38,6 @@ public class Buyer implements Client {
     }
     public PublicKey getPublicKey() { return publicKey; }
     public String getAuthToken() { return authToken; }
-    public void generateKeys() {
-        // Generate public and private keys
-        KeyPair keyPair = Utilities.generateKeyPair();
-        privateKey = keyPair.getPrivate();
-        publicKey = keyPair.getPublic();
-    }
-
-    private byte[] generateHash(String input) {
-        byte[] bytes = new byte[30];
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            bytes = md.digest(input.getBytes()); // Hash the message using SHA-256
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return bytes;
-    }
 
     /**
      * Challenge the server to encrypt hash using their private key, if we can decrypt it using their public key then we know they're real
@@ -74,7 +63,7 @@ public class Buyer implements Client {
                 // Call to server to authorise client, performs the same thing but in reverse
                 byte[] serverHash = stub.generateMessage(id);
                 byte[] encryptedHash = Utilities.performChallenge(privateKey, serverHash);
-                if (stub.authoriseClient(encryptedHash, publicKey, id)) {
+                if (stub.authoriseClient(encryptedHash, publicKey, id, "Buyer")) {
                     System.out.println("Server has authorised you");
                     authorised = true;
                 } else {

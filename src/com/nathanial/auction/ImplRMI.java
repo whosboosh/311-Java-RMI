@@ -6,39 +6,36 @@ import java.security.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Random;
 
-public class ImplRMI implements RMIService {
-    private HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
-    private ArrayList<Integer> sellers = new ArrayList<>();
-    private ArrayList<Integer> buyers = new ArrayList<>();
-    private HashMap<Integer, byte[]> messageHashes = new HashMap<>();
+import com.sun.security.ntlm.Server;
+import org.jgroups.ReceiverAdapter;
 
+public abstract class ImplRMI extends ReceiverAdapter implements RMIService {
+    protected HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
+    protected ArrayList<Integer> sellers = new ArrayList<>();
+    protected ArrayList<Integer> buyers = new ArrayList<>();
+    final protected ServerData serverData = new ServerData();
+    private HashMap<Integer, byte[]> messageHashes = new HashMap<>(); // Used to hold message hashes between client authoriation calls
     private PrivateKey privateKey;
     private PublicKey publicKey;
 
     public void generateKeys() {
-        // Generate a symmetric key for the client and server
+        // Generate asymmetric key for the client and server
         KeyPair keyPair = Utilities.generateKeyPair();
         privateKey = keyPair.getPrivate();
         publicKey = keyPair.getPublic();
-        Utilities.generateKey();
-    }
-
-    public PublicKey getPublicKey() {
-        return publicKey;
     }
 
     // Challenge client to encrypt a string using their private key
     // If the responded message can be decrypted by their public key then we know they are legitimate
-    public boolean authoriseClient(byte[] encryptedHash, PublicKey publicKey, int clientId) {
+    public boolean authoriseClient(byte[] encryptedHash, PublicKey publicKey, int clientId, String type) {
         boolean returnVal = false;
         try {
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, publicKey);
             byte[] digitalSignature = cipher.doFinal(encryptedHash); // Decrypt the response with client public key
             if (Arrays.equals(digitalSignature, messageHashes.get(clientId))) {
-                System.out.println("Client "+clientId+" is authorised");
+                System.out.println(type+" "+clientId+" is authorised");
                 returnVal = true;
             } else {
                 System.out.println("Failed to authorise client "+clientId);
@@ -58,7 +55,6 @@ public class ImplRMI implements RMIService {
         return messageHash;
     }
 
-
     public void removeSeller(int id) {
         sellers.remove(id);
     }
@@ -69,10 +65,6 @@ public class ImplRMI implements RMIService {
 
     public byte[] challengeServer(byte[] message) {
         return Utilities.performChallenge(privateKey, message);
-    }
-
-    public HashMap<Integer, AuctionItem> getAuctionItems() {
-        return auctionItems;
     }
 
     public ArrayList<Integer> getSellers() {
@@ -91,9 +83,12 @@ public class ImplRMI implements RMIService {
         sellers.add(sellerId);
     }
 
+    public PublicKey getPublicKey() { return publicKey; }
+
     // Return auction item with provided item Id
     public AuctionItem getSpec(int itemId, int clientId) {
         // Return the item out of auctionList with ID itemID
+        // If the clientId has been authorised return
         return auctionItems.get(itemId);
     }
 
@@ -114,6 +109,9 @@ public class ImplRMI implements RMIService {
     // Return auction item based on id
     public AuctionItem getAuctionItem(int id) {
         return auctionItems.get(id);
+    }
+    public HashMap<Integer, AuctionItem> getAuctionItems() {
+        return auctionItems;
     }
 
     public int createAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
@@ -146,7 +144,7 @@ public class ImplRMI implements RMIService {
             System.out.println("Reserve was not met for item "+itemId);
             return -4; // Failed to meet reserve
         } else {
-            System.out.println(highestBid.getBuyerId()+" has won item "+itemId);
+            System.out.println("Buyer: "+highestBid.getBuyerId()+" has won item with ID: "+itemId+" "+ auctionItems.get(itemId).getName());
             auctionItems.get(itemId).setWinningBuyerId(highestBid.getBuyerId()); // Mark winner as buyerId
             return 0;
         }

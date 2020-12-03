@@ -1,0 +1,36 @@
+version: '3.7'
+services:
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        command: java com.nathanial.auction.FrontEndServer
+        image: 311-rmi
+        container_name: frontend
+        network_mode: "host"
+        ports: 
+            - '1099:1099'
+    replica-1:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        command: java com.nathanial.auction.Replica
+        image: 311-rmi
+        container_name: replica-1
+        network_mode: "host"
+    replica-2:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        command: java com.nathanial.auction.Replica
+        image: 311-rmi
+        container_name: replica-2
+        network_mode: "host"
+    replica-3:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        command: java com.nathanial.auction.Replica
+        image: 311-rmi 
+        container_name: replica-3
+        network_mode: "host"
