@@ -11,8 +11,7 @@ import org.jgroups.util.RspList;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class AuctionFrontend extends AuctionImpl {
     private JChannel channel;
@@ -68,23 +67,12 @@ public class AuctionFrontend extends AuctionImpl {
         return list;
     }
 
-    /*
-    public void sendMessageToReplicas() {
-        System.out.println("Auction added, Sending messages to all replicas in cluster");
-        try {
-            Message message = new Message(null);
-            message.setBuffer(Util.objectToByteBuffer(new ServerData(auctionItems, buyers, sellers)));
-            channel.send(message);
-            System.out.println("Sent message to channel");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }*/
-
     // Create an auction
     @Override
     public int createAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
+        int returnVal = 0;
         List<Address> clusterMembers = getReplicas();
+        //System.out.println(Arrays.toString(clusterMembers.toArray()));
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                                                                     null,
@@ -92,14 +80,35 @@ public class AuctionFrontend extends AuctionImpl {
 																	new Object[]{sellerId, startingPrice, name, description, reserve},
 																	new Class[]{int.class, double.class, String.class, String.class, double.class},
 																	this.requestOptions);
+
+             if (responses.getResults().isEmpty()) {
+                 throw new Error("No valid responses from replicas found");
+             }
+            // Generates a hashmap based on return results. key/pair = value returned, number of times it was sent from a replica
+            HashMap<Integer, Integer> list = new HashMap<>();
+            for (Address address : clusterMembers) {
+                Rsp response = responses.get(address);
+                int value = (int)response.getValue();
+                int count = list.getOrDefault(value, 0);
+                list.put(value, count+1);
+            }
+
+            // Check if all the responses are equal
+            // If true: return response
+            // If false: majority vote
+            returnVal = (int)responses.get(clusterMembers.get(0)).getValue(); // Return the first value in the case all responses are the same
             for (Address address : clusterMembers) {
                 Rsp response = responses.get(address);
                 System.out.println(address+ ": "+response.getValue());
+                if (!response.equals(responses.get(clusterMembers.get(0)))) { // Not all the same, return the value with the highest agreement value
+                    System.out.println("Not all values are the same!");
+                    returnVal = Collections.max(list.values()); // Return the highest value
+                }
             }
         } catch(Exception e) {
             e.printStackTrace();
         }
-        return 0;
+        return returnVal; // ID of the new auction item
     }
     // Bid on an auction
     @Override

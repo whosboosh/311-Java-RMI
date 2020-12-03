@@ -6,8 +6,6 @@ import java.security.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-
-import com.sun.security.ntlm.Server;
 import org.jgroups.ReceiverAdapter;
 
 public abstract class AuctionImpl extends ReceiverAdapter implements RMIService {
