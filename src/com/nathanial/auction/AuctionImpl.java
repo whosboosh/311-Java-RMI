@@ -10,11 +10,10 @@ import java.util.HashMap;
 import com.sun.security.ntlm.Server;
 import org.jgroups.ReceiverAdapter;
 
-public abstract class ImplRMI extends ReceiverAdapter implements RMIService {
+public abstract class AuctionImpl extends ReceiverAdapter implements RMIService {
     protected HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
     protected ArrayList<Integer> sellers = new ArrayList<>();
     protected ArrayList<Integer> buyers = new ArrayList<>();
-    final protected ServerData serverData = new ServerData();
     private HashMap<Integer, byte[]> messageHashes = new HashMap<>(); // Used to hold message hashes between client authoriation calls
     private PrivateKey privateKey;
     private PublicKey publicKey;
