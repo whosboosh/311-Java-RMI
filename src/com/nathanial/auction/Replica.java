@@ -66,6 +66,7 @@ public class Replica extends AuctionImpl {
         }
     }
 
+    // Provide state for other replicas
     public void getState(OutputStream output) throws Exception {
         System.out.println("Providing state with existing details");
         synchronized (serverData) {
@@ -73,6 +74,7 @@ public class Replica extends AuctionImpl {
         }
     }
 
+    // Ran when new replica is made, initialises state with data from other replica
     public void setState(InputStream input) throws Exception {
         System.out.println("Setting state with data from other replicas!");
         ServerData data = (ServerData) Util.objectFromStream(new DataInputStream(input));
@@ -93,60 +95,49 @@ public class Replica extends AuctionImpl {
     }
 
     // Create an auction
-    @Override
-    public int createAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
+    public int runCreateAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
         int result =  super.createAuction(sellerId, startingPrice, name, description, reserve);
         synchroniseState();
         return result;
     }
     // Bid on an auction
-    @Override
-    public synchronized double bidAuction(Bid bid) {
+    public synchronized double runBidAuction(Bid bid) {
         double result = super.bidAuction(bid);
         synchroniseState();
         return result;
     }
     // When client requests to close auction
-    @Override
-    public double closeAuction(int itemId, int clientId) {
+    public double runCloseAuction(int itemId, int clientId) {
         double result =  super.closeAuction(itemId, clientId);
         synchroniseState();
         return result;
     }
-    @Override
-    public void addBuyer(int buyerId) {
+    public void runAddBuyer(int buyerId) {
         super.addBuyer(buyerId);
         synchroniseState();
     }
-    @Override
-    public void addSeller(int sellerId) {
+    public void runAddSeller(int sellerId) {
         super.addSeller(sellerId);
         synchroniseState();
     }
-    @Override
-    public void removeSeller(int id) {
+    public void runRemoveSeller(int id) {
         super.removeSeller(id);
         synchroniseState();
     }
-    @Override
-    public void removeBuyer(int id) {
+    public void runRemoveBuyer(int id) {
         super.removeBuyer(id);
         synchroniseState();
     }
-    @Override
-    public ArrayList<Integer> getBuyers() {
+    public ArrayList<Integer> runGetBuyers() {
         return super.getBuyers();
     }
-    @Override
-    public ArrayList<Integer> getSellers() {
+    public ArrayList<Integer> runGetSellers() {
         return super.getSellers();
     }
-    @Override
-    public HashMap<Integer, AuctionItem> getAuctionItems() {
+    public HashMap<Integer, AuctionItem> runGetAuctionItems() {
         return super.getAuctionItems();
     }
-    @Override
-    public AuctionItem getAuctionItem(int id) {
+    public AuctionItem runGetAuctionItem(int id) {
         return super.getAuctionItem(id);
     }
 

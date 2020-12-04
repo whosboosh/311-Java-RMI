@@ -42,7 +42,7 @@ public class AuctionFrontend extends AuctionImpl {
             this.requestOptions = new RequestOptions(ResponseMode.GET_ALL, TIMEOUT);
             this.dispatcher = new RpcDispatcher(this.channel, this);
             this.channel.connect("AuctionCluster");
-            this.channel.setDiscardOwnMessages(true);
+            //this.channel.setDiscardOwnMessages(true);
             // TODO: How to close channel
         } catch (Exception e) {
             e.printStackTrace();
@@ -113,7 +113,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                                                                     null,
-																	"createAuction",
+																	"runCreateAuction",
 																	new Object[]{sellerId, startingPrice, name, description, reserve},
 																	new Class[]{int.class, double.class, String.class, String.class, double.class},
 																	this.requestOptions);
@@ -134,7 +134,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "bidAuction",
+                    "runBidAuction",
                     new Object[]{bid},
                     new Class[]{Bid.class},
                     this.requestOptions);
@@ -149,7 +149,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "closeAuction",
+                    "runCloseAuction",
                     new Object[]{itemId, clientId},
                     new Class[]{int.class, int.class},
                     this.requestOptions);
@@ -163,7 +163,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "addBuyer",
+                    "runAddBuyer",
                     new Object[]{buyerId},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -176,7 +176,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "addSeller",
+                    "runAddSeller",
                     new Object[]{sellerId},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -189,7 +189,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "removeSeller",
+                    "runRemoveSeller",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -202,7 +202,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "removeBuyer",
+                    "runRemoveBuyer",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -219,7 +219,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "getBuyers",
+                    "runGetBuyers",
                     null,
                     null,
                     this.requestOptions);
@@ -239,12 +239,12 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "getSellers",
+                    "runGetSellers",
                     null,
                     null,
                     this.requestOptions);
             for (Address address : clusterMembers) {
-                buyers = (ArrayList<Integer>)responses.get(address).getValue();
+                sellers = (ArrayList<Integer>)responses.get(address).getValue();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -258,7 +258,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "getAuctionItem",
+                    "runGetAuctionItem",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -277,7 +277,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "getAuctionItems",
+                    "runGetAuctionItems",
                     null,
                     null,
                     this.requestOptions);
