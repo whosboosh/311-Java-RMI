@@ -25,6 +25,7 @@ public class ClientSeller {
 
     private RMIService stub;
     private Seller currentSeller = null;
+    private HashMap<Integer, Seller> sellers = new HashMap<>();
 
     public void startInput() {
         try {
@@ -53,6 +54,7 @@ public class ClientSeller {
                                 } else {
                                     currentSeller = testSeller;
                                     stub.addSeller(currentSeller.getId());
+                                    this.sellers.put(testSeller.getId(), testSeller); // Add local seller
                                     System.out.println("Seller account created with ID: " + sellerId);
                                     System.out.println("Logged in as " + sellerId);
                                     break;
@@ -65,6 +67,26 @@ public class ClientSeller {
                                 }
                                 System.out.println("Currently logged in as: "+currentSeller.getId());
                                 break;
+                            case "login":
+                                // Allow the user to login as another seller
+                                if (sellers.isEmpty()) {
+                                    System.out.println("No accounts found, create one with 'auth create'");
+                                    break;
+                                }
+                                // Needs 3 commands to login, check if less than 3 and if true break
+                                if (splitted.length < 3) {
+                                    System.out.println("Please provide an id to login as");
+                                    break;
+                                } else {
+                                    Seller trySeller = this.sellers.get(Integer.parseInt(splitted[2]));
+                                    if (trySeller == null) {
+                                        System.out.println("No seller with ID found");
+                                        break;
+                                    } else {
+                                        currentSeller = trySeller;
+                                        System.out.println("Now logged in as: " + trySeller.getId());
+                                    }
+                                }
                         }
                         break;
                     case "auction":

@@ -82,8 +82,6 @@ public class AuctionFrontend extends AuctionImpl {
             int count = list.getOrDefault(value, 0);
             list.put(value, count+1);
         }
-        System.out.println(Arrays.toString(list.keySet().toArray()));
-        System.out.println(Arrays.toString(list.values().toArray()));
         return list;
     }
 
@@ -98,7 +96,7 @@ public class AuctionFrontend extends AuctionImpl {
                 break;
             }
         }
-        System.out.println("Replica with most current state "+responses.get(addressWithMostVotes).getValue()+" : "+addressWithMostVotes);
+        //System.out.println("Replica with most current state "+responses.get(addressWithMostVotes).getValue()+" : "+addressWithMostVotes);
 
         List<Address> list = new LinkedList<>();
         list.add(addressWithMostVotes);
@@ -120,9 +118,10 @@ public class AuctionFrontend extends AuctionImpl {
     public <T> T voteOnResponses(RspList responses, HashMap<T, Integer> list) {
         List<Address> clusterMembers = getReplicas();
         T returnVal = (T)responses.get(clusterMembers.get(0)).getValue();
+        System.out.println(responses);
         for (Address address : clusterMembers) {
             Rsp response = responses.get(address);
-            System.out.println(address+ ": "+response.getValue());
+            //System.out.println(address+ ": "+response.getValue());
             if (!response.getValue().equals(responses.get(clusterMembers.get(0)).getValue())) { // Not all the same, return the value with the highest agreement value
                 System.out.println("Not all values are the same!");
                 int maxValue = Collections.max(list.values()); // Value that is highest in the hashmap
@@ -180,6 +179,7 @@ public class AuctionFrontend extends AuctionImpl {
     // Bid on an auction
     @Override
     public synchronized double bidAuction(Bid bid) {
+        double returnVal = 0;
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
@@ -187,14 +187,17 @@ public class AuctionFrontend extends AuctionImpl {
                     new Object[]{bid},
                     new Class[]{Bid.class},
                     this.requestOptions);
+            HashMap<Double, Integer> list = buildMap(responses);
+            returnVal = voteOnResponses(responses, list);
         } catch(Exception e) {
             e.printStackTrace();
         }
-        return 0;
+        return returnVal;
     }
     // When client requests to close auction
     @Override
     public double closeAuction(int itemId, int clientId) {
+        double returnVal = 0;
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
@@ -202,65 +205,13 @@ public class AuctionFrontend extends AuctionImpl {
                     new Object[]{itemId, clientId},
                     new Class[]{int.class, int.class},
                     this.requestOptions);
+            HashMap<Double, Integer> list = buildMap(responses);
+            returnVal = voteOnResponses(responses, list);
         } catch(Exception e) {
             e.printStackTrace();
         }
-        return 0;
+        return returnVal;
     }
-    @Override
-    public void addBuyer(int buyerId) {
-        try {
-            RspList responses = this.dispatcher.callRemoteMethods(
-                    null,
-                    "addBuyer",
-                    new Object[]{buyerId},
-                    new Class[]{int.class},
-                    this.requestOptions);
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-    @Override
-    public void addSeller(int sellerId) {
-        try {
-            RspList responses = this.dispatcher.callRemoteMethods(
-                    null,
-                    "addSeller",
-                    new Object[]{sellerId},
-                    new Class[]{int.class},
-                    this.requestOptions);
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-    @Override
-    public void removeSeller(int id) {
-        try {
-            RspList responses = this.dispatcher.callRemoteMethods(
-                    null,
-                    "removeSeller",
-                    new Object[]{id},
-                    new Class[]{int.class},
-                    this.requestOptions);
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-    @Override
-    public void removeBuyer(int id) {
-        try {
-            RspList responses = this.dispatcher.callRemoteMethods(
-                    null,
-                    "removeBuyer",
-                    new Object[]{id},
-                    new Class[]{int.class},
-                    this.requestOptions);
-
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public ArrayList<Integer> getBuyers() {
         ArrayList<Integer> buyers = new ArrayList<>();
@@ -272,9 +223,8 @@ public class AuctionFrontend extends AuctionImpl {
                     null,
                     null,
                     this.requestOptions);
-            for (Address address : clusterMembers) {
-                buyers = (ArrayList<Integer>)responses.get(address).getValue();
-            }
+            HashMap<ArrayList<Integer>, Integer> list = buildMap(responses);
+            buyers = voteOnResponses(responses, list);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -292,28 +242,8 @@ public class AuctionFrontend extends AuctionImpl {
                     null,
                     null,
                     this.requestOptions);
-            for (Address address : clusterMembers) {
-                sellers = (ArrayList<Integer>)responses.get(address).getValue();
-            }
             HashMap<ArrayList<Integer>, Integer> list = buildMap(responses);
-            sellers = (ArrayList<Integer>)responses.get(clusterMembers.get(0)).getValue(); // Return the first value in the case all responses are the same
-            for (Address address : clusterMembers) {
-                Rsp response = responses.get(address);
-                System.out.println(address+ ": "+response.getValue());
-                if (!response.equals(responses.get(clusterMembers.get(0)))) { // Not all the same, return the value with the highest agreement value
-                    System.out.println("Not all values are the same!");
-                    int maxValue = Collections.max(list.values()); // Value that is highest in the hashmap
-                    // Need to find the pairing key to the maxValue
-                    for (Map.Entry<ArrayList<Integer>, Integer> entry : list.entrySet()) {
-                        if (Objects.equals(maxValue, entry.getValue())) {
-                            // Synchronise replica state from the most voted state
-                            synchroniseReplicas(entry, responses);
-                            sellers = entry.getKey();
-                            break;
-                        }
-                    }
-                }
-            }
+            sellers = voteOnResponses(responses, list);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -330,9 +260,8 @@ public class AuctionFrontend extends AuctionImpl {
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
-            for (Address address : clusterMembers) {
-                item = (AuctionItem)responses.get(address).getValue();
-            }
+            HashMap<AuctionItem, Integer> list = buildMap(responses);
+            item = voteOnResponses(responses, list);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -349,13 +278,65 @@ public class AuctionFrontend extends AuctionImpl {
                     null,
                     null,
                     this.requestOptions);
-            for (Address address : clusterMembers) {
-                auctionItems = (HashMap<Integer, AuctionItem>) responses.get(address).getValue();
-            }
+            HashMap<HashMap<Integer, AuctionItem>, Integer> list = buildMap(responses);
+            auctionItems = voteOnResponses(responses, list);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return auctionItems;
+    }
+    @Override
+    public void addBuyer(int buyerId) {
+        try {
+            this.dispatcher.callRemoteMethods(
+                    null,
+                    "addBuyer",
+                    new Object[]{buyerId},
+                    new Class[]{int.class},
+                    this.requestOptions);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+    @Override
+    public void addSeller(int sellerId) {
+        try {
+            this.dispatcher.callRemoteMethods(
+                    null,
+                    "addSeller",
+                    new Object[]{sellerId},
+                    new Class[]{int.class},
+                    this.requestOptions);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+    @Override
+    public void removeSeller(int id) {
+        try {
+            this.dispatcher.callRemoteMethods(
+                    null,
+                    "removeSeller",
+                    new Object[]{id},
+                    new Class[]{int.class},
+                    this.requestOptions);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+    @Override
+    public void removeBuyer(int id) {
+        try {
+            this.dispatcher.callRemoteMethods(
+                    null,
+                    "removeBuyer",
+                    new Object[]{id},
+                    new Class[]{int.class},
+                    this.requestOptions);
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {

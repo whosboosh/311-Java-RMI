@@ -81,7 +81,7 @@ public class Replica extends AuctionImpl {
         System.out.println("Setting state with data from other replicas!");
         ServerData data = (ServerData) Util.objectFromStream(new DataInputStream(input));
         synchronized (serverData) {
-            //serverData.setValues(data.getAuctionItems(), data.getBuyers(), data.getSellers());
+            serverData.setValues(data.getAuctionItems(), data.getBuyers(), data.getSellers());
         }
     }
 
@@ -102,7 +102,6 @@ public class Replica extends AuctionImpl {
     @Override
     public int createAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
         return super.createAuction(sellerId, startingPrice, name, description, reserve);
-
     }
     // Bid on an auction
     @Override
