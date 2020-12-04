@@ -28,7 +28,15 @@ public class AuctionFrontend extends AuctionImpl {
             registry.rebind("ServerRMI", stub); // Bind stub to registry on "ServerRMI"
 
             this.generateKeys(); // Generate asymmetric keys
-            this.startCluster(); // Start and join JGroups cluster
+
+            // Start and join JGroups cluster, if the first in the group, keep recreating the channel until not
+            while(this.startCluster()) {
+                channel.close(); // Close the channel and try again
+                Thread.sleep(1000); // Block thread for 1 second
+            }
+            // If we're not the first, then we can connect
+            this.channel.connect("AuctionCluster");
+            this.channel.setDiscardOwnMessages(true);
             System.out.println("Server Ready");
         } catch (Exception e) {
             System.err.println("Server exception: "+e.toString());
@@ -36,17 +44,32 @@ public class AuctionFrontend extends AuctionImpl {
         }
     }
 
-    public void startCluster() {
+    public boolean startCluster() {
+        boolean returnVal = true;
         try {
             channel = new JChannel();
             this.requestOptions = new RequestOptions(ResponseMode.GET_ALL, TIMEOUT);
             this.dispatcher = new RpcDispatcher(this.channel, this);
             this.channel.connect("AuctionCluster");
-            //this.channel.setDiscardOwnMessages(true);
-            // TODO: How to close channel
+            this.channel.setDiscardOwnMessages(true);
+            returnVal = isFirst();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return returnVal;
+    }
+
+    // Returns true if server is the first to join the JChannel view
+    public boolean isFirst() {
+        boolean returnVal = false;
+        View view = channel.getView();
+        if (view.getMembers().isEmpty()) {
+            return true;
+        }
+        for (int i = 0; i < view.getMembers().size(); i++) {
+            if (i == 0 && channel.getAddress().equals(view.getMembers().get(i))) returnVal = true;
+        }
+        return returnVal;
     }
 
     // Generates a hashmap based on replica response. Builds key/pair = (value returned, number of times it was sent from a replica)
@@ -64,6 +87,33 @@ public class AuctionFrontend extends AuctionImpl {
         return list;
     }
 
+    // Used to find the replica with the most current state, send the state out to all other replicas with their state
+    // To fix any state issues
+    public void synchroniseReplicas(Map.Entry entry, RspList responses) {
+        List<Address> clusterMembers = getReplicas();
+        Address addressWithMostVotes = clusterMembers.get(0);
+        for (Address address : clusterMembers) {
+            if (responses.get(address).getValue() == entry.getKey()) {
+                addressWithMostVotes = address;
+                break;
+            }
+        }
+        System.out.println("Replica with most current state "+responses.get(addressWithMostVotes).getValue()+" : "+addressWithMostVotes);
+
+        LinkedList<Address> list = new LinkedList<>();
+        list.add(addressWithMostVotes);
+        try {
+            responses = this.dispatcher.callRemoteMethods(
+                    list,
+                    "synchroniseState",
+                    null,
+                    null,
+                    this.requestOptions);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     // Check if all the responses are equal
     // If true: return response
     // If false: majority vote
@@ -73,12 +123,14 @@ public class AuctionFrontend extends AuctionImpl {
         for (Address address : clusterMembers) {
             Rsp response = responses.get(address);
             System.out.println(address+ ": "+response.getValue());
-            if (!response.equals(responses.get(clusterMembers.get(0)))) { // Not all the same, return the value with the highest agreement value
+            if (!response.getValue().equals(responses.get(clusterMembers.get(0)).getValue())) { // Not all the same, return the value with the highest agreement value
                 System.out.println("Not all values are the same!");
                 int maxValue = Collections.max(list.values()); // Value that is highest in the hashmap
                 // Need to find the pairing key to the maxValue
                 for (Map.Entry<T, Integer> entry : list.entrySet()) {
                     if (Objects.equals(maxValue, entry.getValue())) {
+                        // Synchronise replica state from the most voted state
+                        synchroniseReplicas(entry, responses);
                         returnVal = entry.getKey();
                         break;
                     }
@@ -93,14 +145,11 @@ public class AuctionFrontend extends AuctionImpl {
         View view = channel.getView();
         List<Address> addresses = view.getMembers();
         // Create linkedlist of addresses
-        LinkedList<Address> list = new LinkedList<>(addresses);
-        int i = 0;
-        for (Address address : list) {
-            if (address == channel.getAddress()) {
-                list.remove(i);
-                break;
+        LinkedList<Address> list = new LinkedList<>();
+        for (Address address : addresses) {
+            if (!address.equals(channel.getAddress())) {
+                list.add(address);
             }
-            i++;
         }
         return list;
     }
@@ -112,15 +161,15 @@ public class AuctionFrontend extends AuctionImpl {
         //System.out.println(Arrays.toString(clusterMembers.toArray()));
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
-                                                                    null,
-																	"runCreateAuction",
-																	new Object[]{sellerId, startingPrice, name, description, reserve},
-																	new Class[]{int.class, double.class, String.class, String.class, double.class},
-																	this.requestOptions);
+                    null,
+                    "createAuction",
+                    new Object[]{sellerId, startingPrice, name, description, reserve},
+                    new Class[]{int.class, double.class, String.class, String.class, double.class},
+                    this.requestOptions);
 
-             if (responses.getResults().isEmpty()) {
-                 throw new Error("No valid responses from replicas found");
-             }
+            if (responses.getResults().isEmpty()) {
+                throw new Error("No valid responses from replicas found");
+            }
             HashMap<Integer, Integer> list = buildMap(responses);
             returnVal = voteOnResponses(responses, list);
         } catch(Exception e) {
@@ -134,7 +183,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runBidAuction",
+                    "bidAuction",
                     new Object[]{bid},
                     new Class[]{Bid.class},
                     this.requestOptions);
@@ -149,7 +198,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runCloseAuction",
+                    "closeAuction",
                     new Object[]{itemId, clientId},
                     new Class[]{int.class, int.class},
                     this.requestOptions);
@@ -163,7 +212,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runAddBuyer",
+                    "addBuyer",
                     new Object[]{buyerId},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -176,7 +225,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runAddSeller",
+                    "addSeller",
                     new Object[]{sellerId},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -189,7 +238,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runRemoveSeller",
+                    "removeSeller",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -202,7 +251,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runRemoveBuyer",
+                    "removeBuyer",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -219,13 +268,13 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runGetBuyers",
+                    "getBuyers",
                     null,
                     null,
                     this.requestOptions);
-        for (Address address : clusterMembers) {
-            buyers = (ArrayList<Integer>)responses.get(address).getValue();
-        }
+            for (Address address : clusterMembers) {
+                buyers = (ArrayList<Integer>)responses.get(address).getValue();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -239,7 +288,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runGetSellers",
+                    "getSellers",
                     null,
                     null,
                     this.requestOptions);
@@ -258,7 +307,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runGetAuctionItem",
+                    "getAuctionItem",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -277,7 +326,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runGetAuctionItems",
+                    "getAuctionItems",
                     null,
                     null,
                     this.requestOptions);
@@ -289,7 +338,6 @@ public class AuctionFrontend extends AuctionImpl {
         }
         return auctionItems;
     }
-
 
     public static void main(String[] args) {
         try {

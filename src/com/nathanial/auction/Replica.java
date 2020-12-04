@@ -1,12 +1,9 @@
 package com.nathanial.auction;
-import org.jgroups.JChannel;
-import org.jgroups.Message;
-import org.jgroups.View;
+import org.jgroups.*;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.util.Util;
 
 import java.io.*;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,6 +41,11 @@ public class Replica extends AuctionImpl {
                     System.out.println(Arrays.toString(serverData.getBuyers().toArray()));
                     System.out.println(Arrays.toString(serverData.getSellers().toArray()));
                 }
+                HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
+                auctionItems.put(0, new AuctionItem("asdas", "asdas", 50.0, 0, 0, 0));
+                Message msg=new Message(null);
+                msg.setBuffer(Util.objectToByteBuffer(new ServerData(auctionItems, super.getBuyers(), super.sellers)));
+                channel.send(msg);
             }
             catch(Exception e) {
             }
@@ -95,49 +97,51 @@ public class Replica extends AuctionImpl {
     }
 
     // Create an auction
-    public int runCreateAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
-        int result =  super.createAuction(sellerId, startingPrice, name, description, reserve);
-        synchroniseState();
-        return result;
+    @Override
+    public int createAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
+        return super.createAuction(sellerId, startingPrice, name, description, reserve);
+
     }
     // Bid on an auction
-    public synchronized double runBidAuction(Bid bid) {
-        double result = super.bidAuction(bid);
-        synchroniseState();
-        return result;
+    @Override
+    public synchronized double bidAuction(Bid bid) {
+        return super.bidAuction(bid);
     }
     // When client requests to close auction
-    public double runCloseAuction(int itemId, int clientId) {
-        double result =  super.closeAuction(itemId, clientId);
-        synchroniseState();
-        return result;
+    @Override
+    public double closeAuction(int itemId, int clientId) {
+        return super.closeAuction(itemId, clientId);
     }
-    public void runAddBuyer(int buyerId) {
+    @Override
+    public void addBuyer(int buyerId) {
         super.addBuyer(buyerId);
-        synchroniseState();
     }
-    public void runAddSeller(int sellerId) {
+    @Override
+    public void addSeller(int sellerId) {
         super.addSeller(sellerId);
-        synchroniseState();
     }
-    public void runRemoveSeller(int id) {
+    @Override
+    public void removeSeller(int id) {
         super.removeSeller(id);
-        synchroniseState();
     }
-    public void runRemoveBuyer(int id) {
+    @Override
+    public void removeBuyer(int id) {
         super.removeBuyer(id);
-        synchroniseState();
     }
-    public ArrayList<Integer> runGetBuyers() {
+    @Override
+    public ArrayList<Integer> getBuyers() {
         return super.getBuyers();
     }
-    public ArrayList<Integer> runGetSellers() {
+    @Override
+    public ArrayList<Integer> getSellers() {
         return super.getSellers();
     }
-    public HashMap<Integer, AuctionItem> runGetAuctionItems() {
+    @Override
+    public HashMap<Integer, AuctionItem> getAuctionItems() {
         return super.getAuctionItems();
     }
-    public AuctionItem runGetAuctionItem(int id) {
+    @Override
+    public AuctionItem getAuctionItem(int id) {
         return super.getAuctionItem(id);
     }
 
