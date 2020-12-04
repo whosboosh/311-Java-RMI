@@ -7,13 +7,19 @@ import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
-
+import javax.crypto.Cipher;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.*;
 
-public class AuctionFrontend extends AuctionImpl {
+public class AuctionFrontend implements RMIService {
+    private HashMap<Integer, byte[]> messageHashes = new HashMap<>(); // Used to hold message hashes between client authoriation calls
+    private PrivateKey privateKey;
+    private PublicKey publicKey;
     private JChannel channel;
     private RpcDispatcher dispatcher;
     private RequestOptions requestOptions;
@@ -42,11 +48,51 @@ public class AuctionFrontend extends AuctionImpl {
             this.requestOptions = new RequestOptions(ResponseMode.GET_ALL, TIMEOUT);
             this.dispatcher = new RpcDispatcher(this.channel, this);
             this.channel.connect("AuctionCluster");
-            //this.channel.setDiscardOwnMessages(true);
+            this.channel.setDiscardOwnMessages(true);
             // TODO: How to close channel
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void generateKeys() {
+        // Generate asymmetric key for the client and server
+        KeyPair keyPair = Utilities.generateKeyPair();
+        privateKey = keyPair.getPrivate();
+        publicKey = keyPair.getPublic();
+    }
+
+    // Challenge client to encrypt a string using their private key
+    // If the responded message can be decrypted by their public key then we know they are legitimate
+    public boolean authoriseClient(byte[] encryptedHash, PublicKey publicKey, int clientId, String type) {
+        boolean returnVal = false;
+        try {
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.DECRYPT_MODE, publicKey);
+            byte[] digitalSignature = cipher.doFinal(encryptedHash); // Decrypt the response with client public key
+            if (Arrays.equals(digitalSignature, messageHashes.get(clientId))) {
+                System.out.println(type+" "+clientId+" is authorised");
+                returnVal = true;
+            } else {
+                System.out.println("Failed to authorise client "+clientId);
+                returnVal = false;
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return returnVal;
+    }
+
+    public byte[] generateMessage(int clientId) {
+        // Utilities.generateBytes() generates random bytes for challenge based on rng
+        // We then hash those bytes using SHA-256
+        byte[] messageHash = Utilities.generateHash(Utilities.generateBytes());
+        messageHashes.put(clientId, messageHash);
+        return messageHash;
+    }
+    public PublicKey getPublicKey() { return publicKey; }
+    public byte[] challengeServer(byte[] message) {
+        return Utilities.performChallenge(privateKey, message);
     }
 
     // Generates a hashmap based on replica response. Builds key/pair = (value returned, number of times it was sent from a replica)
@@ -112,15 +158,15 @@ public class AuctionFrontend extends AuctionImpl {
         //System.out.println(Arrays.toString(clusterMembers.toArray()));
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
-                                                                    null,
-																	"runCreateAuction",
-																	new Object[]{sellerId, startingPrice, name, description, reserve},
-																	new Class[]{int.class, double.class, String.class, String.class, double.class},
-																	this.requestOptions);
+                    null,
+                    "createAuction",
+                    new Object[]{sellerId, startingPrice, name, description, reserve},
+                    new Class[]{int.class, double.class, String.class, String.class, double.class},
+                    this.requestOptions);
 
-             if (responses.getResults().isEmpty()) {
-                 throw new Error("No valid responses from replicas found");
-             }
+            if (responses.getResults().isEmpty()) {
+                throw new Error("No valid responses from replicas found");
+            }
             HashMap<Integer, Integer> list = buildMap(responses);
             returnVal = voteOnResponses(responses, list);
         } catch(Exception e) {
@@ -134,7 +180,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runBidAuction",
+                    "bidAuction",
                     new Object[]{bid},
                     new Class[]{Bid.class},
                     this.requestOptions);
@@ -149,7 +195,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runCloseAuction",
+                    "closeAuction",
                     new Object[]{itemId, clientId},
                     new Class[]{int.class, int.class},
                     this.requestOptions);
@@ -163,7 +209,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runAddBuyer",
+                    "addBuyer",
                     new Object[]{buyerId},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -176,7 +222,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runAddSeller",
+                    "addSeller",
                     new Object[]{sellerId},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -189,7 +235,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runRemoveSeller",
+                    "removeSeller",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -202,7 +248,7 @@ public class AuctionFrontend extends AuctionImpl {
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runRemoveBuyer",
+                    "removeBuyer",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -219,13 +265,13 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runGetBuyers",
+                    "getBuyers",
                     null,
                     null,
                     this.requestOptions);
-        for (Address address : clusterMembers) {
-            buyers = (ArrayList<Integer>)responses.get(address).getValue();
-        }
+            for (Address address : clusterMembers) {
+                buyers = (ArrayList<Integer>)responses.get(address).getValue();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -239,7 +285,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runGetSellers",
+                    "getSellers",
                     null,
                     null,
                     this.requestOptions);
@@ -258,7 +304,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runGetAuctionItem",
+                    "getAuctionItem",
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
@@ -277,7 +323,7 @@ public class AuctionFrontend extends AuctionImpl {
             List<Address> clusterMembers = getReplicas();
             RspList responses = this.dispatcher.callRemoteMethods(
                     null,
-                    "runGetAuctionItems",
+                    "getAuctionItems",
                     null,
                     null,
                     this.requestOptions);

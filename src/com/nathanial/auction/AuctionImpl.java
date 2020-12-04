@@ -1,56 +1,12 @@
 package com.nathanial.auction;
-
-import javax.crypto.Cipher;
-import javax.crypto.SealedObject;
-import java.security.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import org.jgroups.ReceiverAdapter;
 
-public abstract class AuctionImpl extends ReceiverAdapter implements RMIService {
+public abstract class AuctionImpl extends ReceiverAdapter implements JgroupsService {
     protected HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
     protected ArrayList<Integer> sellers = new ArrayList<>();
     protected ArrayList<Integer> buyers = new ArrayList<>();
-    private HashMap<Integer, byte[]> messageHashes = new HashMap<>(); // Used to hold message hashes between client authoriation calls
-    private PrivateKey privateKey;
-    private PublicKey publicKey;
-
-    public void generateKeys() {
-        // Generate asymmetric key for the client and server
-        KeyPair keyPair = Utilities.generateKeyPair();
-        privateKey = keyPair.getPrivate();
-        publicKey = keyPair.getPublic();
-    }
-
-    // Challenge client to encrypt a string using their private key
-    // If the responded message can be decrypted by their public key then we know they are legitimate
-    public boolean authoriseClient(byte[] encryptedHash, PublicKey publicKey, int clientId, String type) {
-        boolean returnVal = false;
-        try {
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, publicKey);
-            byte[] digitalSignature = cipher.doFinal(encryptedHash); // Decrypt the response with client public key
-            if (Arrays.equals(digitalSignature, messageHashes.get(clientId))) {
-                System.out.println(type+" "+clientId+" is authorised");
-                returnVal = true;
-            } else {
-                System.out.println("Failed to authorise client "+clientId);
-                returnVal = false;
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return returnVal;
-    }
-
-    public byte[] generateMessage(int clientId) {
-        // Utilities.generateBytes() generates random bytes for challenge based on rng
-        // We then hash those bytes using SHA-256
-        byte[] messageHash = Utilities.generateHash(Utilities.generateBytes());
-        messageHashes.put(clientId, messageHash);
-        return messageHash;
-    }
 
     public void removeSeller(int id) {
         sellers.remove(id);
@@ -58,10 +14,6 @@ public abstract class AuctionImpl extends ReceiverAdapter implements RMIService 
 
     public void removeBuyer(int id) {
         buyers.remove(id);
-    }
-
-    public byte[] challengeServer(byte[] message) {
-        return Utilities.performChallenge(privateKey, message);
     }
 
     public ArrayList<Integer> getSellers() {
@@ -79,8 +31,6 @@ public abstract class AuctionImpl extends ReceiverAdapter implements RMIService 
     public void addSeller(int sellerId) {
         sellers.add(sellerId);
     }
-
-    public PublicKey getPublicKey() { return publicKey; }
 
     // Return auction item based on id
     public AuctionItem getAuctionItem(int id) {
