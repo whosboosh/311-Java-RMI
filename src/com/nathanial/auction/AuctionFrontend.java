@@ -49,6 +49,44 @@ public class AuctionFrontend extends AuctionImpl {
         }
     }
 
+    // Generates a hashmap based on replica response. Builds key/pair = (value returned, number of times it was sent from a replica)
+    public <T> HashMap<T, Integer> buildMap(RspList responses) {
+        HashMap<T, Integer> list = new HashMap<>();
+        List<Address> clusterMembers = getReplicas();
+        for (Address address : clusterMembers) {
+            Rsp response = responses.get(address);
+            T value = (T)response.getValue();
+            int count = list.getOrDefault(value, 0);
+            list.put(value, count+1);
+        }
+        System.out.println(Arrays.toString(list.keySet().toArray()));
+        System.out.println(Arrays.toString(list.values().toArray()));
+        return list;
+    }
+
+    // Check if all the responses are equal
+    // If true: return response
+    // If false: majority vote
+    public <T> T voteOnResponses(RspList responses, HashMap<T, Integer> list) {
+        List<Address> clusterMembers = getReplicas();
+        T returnVal = (T)responses.get(clusterMembers.get(0)).getValue();
+        for (Address address : clusterMembers) {
+            Rsp response = responses.get(address);
+            System.out.println(address+ ": "+response.getValue());
+            if (!response.equals(responses.get(clusterMembers.get(0)))) { // Not all the same, return the value with the highest agreement value
+                System.out.println("Not all values are the same!");
+                int maxValue = Collections.max(list.values()); // Value that is highest in the hashmap
+                // Need to find the pairing key to the maxValue
+                for (Map.Entry<T, Integer> entry : list.entrySet()) {
+                    if (Objects.equals(maxValue, entry.getValue())) {
+                        returnVal = entry.getKey();
+                        break;
+                    }
+                }
+            }
+        }
+        return returnVal;
+    }
 
     // Return array of addresses for all other members in cluster excluding the server
     public List<Address> getReplicas() {
@@ -71,7 +109,6 @@ public class AuctionFrontend extends AuctionImpl {
     @Override
     public int createAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
         int returnVal = 0;
-        List<Address> clusterMembers = getReplicas();
         //System.out.println(Arrays.toString(clusterMembers.toArray()));
         try {
             RspList responses = this.dispatcher.callRemoteMethods(
@@ -84,27 +121,8 @@ public class AuctionFrontend extends AuctionImpl {
              if (responses.getResults().isEmpty()) {
                  throw new Error("No valid responses from replicas found");
              }
-            // Generates a hashmap based on return results. key/pair = value returned, number of times it was sent from a replica
-            HashMap<Integer, Integer> list = new HashMap<>();
-            for (Address address : clusterMembers) {
-                Rsp response = responses.get(address);
-                int value = (int)response.getValue();
-                int count = list.getOrDefault(value, 0);
-                list.put(value, count+1);
-            }
-
-            // Check if all the responses are equal
-            // If true: return response
-            // If false: majority vote
-            returnVal = (int)responses.get(clusterMembers.get(0)).getValue(); // Return the first value in the case all responses are the same
-            for (Address address : clusterMembers) {
-                Rsp response = responses.get(address);
-                System.out.println(address+ ": "+response.getValue());
-                if (!response.equals(responses.get(clusterMembers.get(0)))) { // Not all the same, return the value with the highest agreement value
-                    System.out.println("Not all values are the same!");
-                    returnVal = Collections.max(list.values()); // Return the highest value
-                }
-            }
+            HashMap<Integer, Integer> list = buildMap(responses);
+            returnVal = voteOnResponses(responses, list);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -188,10 +206,90 @@ public class AuctionFrontend extends AuctionImpl {
                     new Object[]{id},
                     new Class[]{int.class},
                     this.requestOptions);
+
         } catch(Exception e) {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public ArrayList<Integer> getBuyers() {
+        ArrayList<Integer> buyers = new ArrayList<>();
+        try {
+            List<Address> clusterMembers = getReplicas();
+            RspList responses = this.dispatcher.callRemoteMethods(
+                    null,
+                    "getBuyers",
+                    null,
+                    null,
+                    this.requestOptions);
+        for (Address address : clusterMembers) {
+            buyers = (ArrayList<Integer>)responses.get(address).getValue();
+        }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return buyers;
+    }
+
+    @Override
+    public ArrayList<Integer> getSellers() {
+        ArrayList<Integer> sellers = new ArrayList<>();
+        try {
+            List<Address> clusterMembers = getReplicas();
+            RspList responses = this.dispatcher.callRemoteMethods(
+                    null,
+                    "getSellers",
+                    null,
+                    null,
+                    this.requestOptions);
+            for (Address address : clusterMembers) {
+                buyers = (ArrayList<Integer>)responses.get(address).getValue();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return sellers;
+    }
+    @Override
+    public AuctionItem getAuctionItem(int id) {
+        AuctionItem item = null;
+        try {
+            List<Address> clusterMembers = getReplicas();
+            RspList responses = this.dispatcher.callRemoteMethods(
+                    null,
+                    "getAuctionItem",
+                    new Object[]{id},
+                    new Class[]{int.class},
+                    this.requestOptions);
+            for (Address address : clusterMembers) {
+                item = (AuctionItem)responses.get(address).getValue();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return item;
+    }
+    @Override
+    public HashMap<Integer, AuctionItem> getAuctionItems() {
+        HashMap<Integer, AuctionItem> auctionItems = new HashMap<>();
+        try {
+            List<Address> clusterMembers = getReplicas();
+            RspList responses = this.dispatcher.callRemoteMethods(
+                    null,
+                    "getAuctionItems",
+                    null,
+                    null,
+                    this.requestOptions);
+            for (Address address : clusterMembers) {
+                auctionItems = (HashMap<Integer, AuctionItem>) responses.get(address).getValue();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return auctionItems;
+    }
+
 
     public static void main(String[] args) {
         try {

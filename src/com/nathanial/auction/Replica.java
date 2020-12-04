@@ -6,7 +6,10 @@ import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.util.Util;
 
 import java.io.*;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class Replica extends AuctionImpl {
     final private ServerData serverData = new ServerData(); // ServerData encapsulates AuctionItems, Users. It's the state that is maintained between replicas
@@ -82,7 +85,7 @@ public class Replica extends AuctionImpl {
         try {
             System.out.println("Synchronising state with other replicas, sending message");
             Message msg=new Message(null);
-            msg.setBuffer(Util.objectToByteBuffer(new ServerData(auctionItems, buyers, sellers)));
+            msg.setBuffer(Util.objectToByteBuffer(new ServerData(super.getAuctionItems(), super.getBuyers(), super.getSellers())));
             channel.send(msg);
         } catch(Exception e) {
             e.printStackTrace();
@@ -90,12 +93,12 @@ public class Replica extends AuctionImpl {
     }
 
     // Create an auction
+    @Override
     public int createAuction(int sellerId, double startingPrice, String name, String description, double reserve) {
         int result =  super.createAuction(sellerId, startingPrice, name, description, reserve);
         synchroniseState();
         return result;
     }
-
     // Bid on an auction
     @Override
     public synchronized double bidAuction(Bid bid) {
@@ -129,6 +132,22 @@ public class Replica extends AuctionImpl {
     public void removeBuyer(int id) {
         super.removeBuyer(id);
         synchroniseState();
+    }
+    @Override
+    public ArrayList<Integer> getBuyers() {
+        return super.getBuyers();
+    }
+    @Override
+    public ArrayList<Integer> getSellers() {
+        return super.getSellers();
+    }
+    @Override
+    public HashMap<Integer, AuctionItem> getAuctionItems() {
+        return super.getAuctionItems();
+    }
+    @Override
+    public AuctionItem getAuctionItem(int id) {
+        return super.getAuctionItem(id);
     }
 
     public static void main(String[] args) throws Exception {

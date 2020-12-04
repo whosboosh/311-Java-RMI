@@ -82,27 +82,6 @@ public abstract class AuctionImpl extends ReceiverAdapter implements RMIService 
 
     public PublicKey getPublicKey() { return publicKey; }
 
-    // Return auction item with provided item Id
-    public AuctionItem getSpec(int itemId, int clientId) {
-        // Return the item out of auctionList with ID itemID
-        // If the clientId has been authorised return
-        return auctionItems.get(itemId);
-    }
-
-    // Return a sealed auction item using the symmetric key
-    public SealedObject getSpec(int itemId, SealedObject clientRequest) {
-        SealedObject sealedResponse = null;
-        try {
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(cipher.ENCRYPT_MODE, Utilities.getKey("key.txt"));
-            sealedResponse = new SealedObject(auctionItems.get(itemId), cipher);
-            System.out.println("Auction Item is now sealed, ready to sent to client");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return sealedResponse;
-    }
-
     // Return auction item based on id
     public AuctionItem getAuctionItem(int id) {
         return auctionItems.get(id);

@@ -8,9 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public interface RMIService extends Remote {
-    public AuctionItem getSpec(int itemId, int clientId) throws RemoteException;
-    public SealedObject getSpec(int itemId, SealedObject clientRequest) throws RemoteException;
-
     public ArrayList<Integer> getBuyers() throws RemoteException;
     public ArrayList<Integer> getSellers() throws RemoteException;
     public void addBuyer(int buyerId) throws RemoteException;
