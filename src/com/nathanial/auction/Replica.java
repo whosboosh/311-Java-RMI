@@ -81,11 +81,13 @@ public class Replica extends AuctionImpl {
         System.out.println("Setting state with data from other replicas!");
         ServerData data = (ServerData) Util.objectFromStream(new DataInputStream(input));
         synchronized (serverData) {
-            serverData.setValues(data.getAuctionItems(), data.getBuyers(), data.getSellers());
+            //serverData.setValues(data.getAuctionItems(), data.getBuyers(), data.getSellers());
         }
     }
 
-    public void synchroniseState() {
+    public void synchroniseState(Address address) {
+        System.out.println("Address in Params: "+address + " : My Address: "+this.channel.getAddress());
+        if (!this.channel.getAddress().equals(address)) return;
         try {
             System.out.println("Synchronising state with other replicas, sending message");
             Message msg=new Message(null);

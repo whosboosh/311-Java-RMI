@@ -100,14 +100,14 @@ public class AuctionFrontend extends AuctionImpl {
         }
         System.out.println("Replica with most current state "+responses.get(addressWithMostVotes).getValue()+" : "+addressWithMostVotes);
 
-        LinkedList<Address> list = new LinkedList<>();
+        List<Address> list = new LinkedList<>();
         list.add(addressWithMostVotes);
         try {
-            responses = this.dispatcher.callRemoteMethods(
+            this.dispatcher.callRemoteMethods(
                     list,
                     "synchroniseState",
-                    null,
-                    null,
+                    new Object[]{addressWithMostVotes},
+                    new Class[]{Address.class},
                     this.requestOptions);
         } catch (Exception e) {
             e.printStackTrace();
@@ -294,6 +294,25 @@ public class AuctionFrontend extends AuctionImpl {
                     this.requestOptions);
             for (Address address : clusterMembers) {
                 sellers = (ArrayList<Integer>)responses.get(address).getValue();
+            }
+            HashMap<ArrayList<Integer>, Integer> list = buildMap(responses);
+            sellers = (ArrayList<Integer>)responses.get(clusterMembers.get(0)).getValue(); // Return the first value in the case all responses are the same
+            for (Address address : clusterMembers) {
+                Rsp response = responses.get(address);
+                System.out.println(address+ ": "+response.getValue());
+                if (!response.equals(responses.get(clusterMembers.get(0)))) { // Not all the same, return the value with the highest agreement value
+                    System.out.println("Not all values are the same!");
+                    int maxValue = Collections.max(list.values()); // Value that is highest in the hashmap
+                    // Need to find the pairing key to the maxValue
+                    for (Map.Entry<ArrayList<Integer>, Integer> entry : list.entrySet()) {
+                        if (Objects.equals(maxValue, entry.getValue())) {
+                            // Synchronise replica state from the most voted state
+                            synchroniseReplicas(entry, responses);
+                            sellers = entry.getKey();
+                            break;
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
